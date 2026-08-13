@@ -1,0 +1,539 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXTENDED LATIN
+   ═══════════════════════════════════════════════════════════════════════════
+   The main faces are loaded by next/font/local in layout.tsx, which handles
+   fingerprinting, preloading and fallback metrics — but it cannot express a
+   `unicode-range` per file.
+
+   These declare the latin-ext subset by hand so accented characters outside
+   Latin-1 still render in the right typeface: Polish, Czech, Hungarian,
+   Turkish, Romanian and Baltic letters, which a reviewer's name may well
+   contain.
+
+   Because a `unicode-range` is set, browsers only download these when a page
+   actually contains one of those characters. Everyone else pays nothing.
+   They sit second in the font stacks below, and font fallback is per glyph.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: "Cormorant Garamond Ext";
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url("/fonts/cormorant-garamond-latin-ext-300-500-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond Ext";
+  font-style: italic;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url("/fonts/cormorant-garamond-latin-ext-400-italic.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Inter Ext";
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url("/fonts/inter-latin-ext-300-500-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ELSHADAI CAKE CREATIONS — DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════
+   A warm editorial palette built to sit underneath cake photography without
+   competing with it: ivory paper, espresso ink, and a single restrained plum
+   accent. Decorative details borrow from icing lines and cake layers.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
+  --color-ivory: #fbf7f1;
+  --color-vanilla: #f4ece1;
+  --color-champagne: #ebdfcd;
+  --color-caramel: #c9a882;
+
+  /* ── Ink ──────────────────────────────────────────────────────────────── */
+  --color-espresso: #2a1d17;
+  --color-cocoa: #4a352b;
+  --color-cocoa-soft: #6b5347;
+  --color-near-black: #17100c;
+
+  /* ── Accent, used sparingly ───────────────────────────────────────────── */
+  --color-plum: #6d3b4d;
+  --color-plum-deep: #52293a;
+  --color-berry: #8a4a5e;
+  --color-rose: #c9a1a8;
+
+  /* ── Feedback ─────────────────────────────────────────────────────────── */
+  --color-success: #4a6b4f;
+  --color-danger: #8f3b32;
+
+  /* ── Type ─────────────────────────────────────────────────────────────── */
+  /*
+    The Ext families are listed FIRST, which looks wrong but is not: each of
+    their faces carries a `unicode-range`, so the browser skips them entirely
+    for ordinary characters and only reaches for them on a glyph in that range.
+    Placing them last would make them unreachable — the generic `serif` in the
+    fallback chain matches everything and would win first.
+  */
+  --font-serif: "Cormorant Garamond Ext", var(--font-cormorant), Georgia, serif;
+  --font-sans: "Inter Ext", var(--font-inter), system-ui, -apple-system, sans-serif;
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --ease-silk: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-curtain: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html {
+  scroll-behavior: smooth;
+  /* Stops the whole page sliding sideways on phones. */
+  overflow-x: hidden;
+  /* Anchors and focus targets clear the fixed header. */
+  scroll-padding-top: 6rem;
+}
+
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-cocoa);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* A very fine paper grain. Keeps large ivory areas from looking flat. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-serif);
+  color: var(--color-espresso);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+
+::selection {
+  background-color: var(--color-plum);
+  color: var(--color-ivory);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPE SCALE
+   ═══════════════════════════════════════════════════════════════════════════
+   Fluid, so headings stay large on desktop without overwhelming a phone.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.display-xl {
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 9vw, 8.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-weight: 300;
+}
+
+.display-lg {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 6.4vw, 5.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  font-weight: 300;
+}
+
+.display {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4.4vw, 3.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+
+.display-sm {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  font-weight: 400;
+}
+
+.eyebrow {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.voice {
+  font-size: clamp(1.0625rem, 1.35vw, 1.25rem);
+  line-height: 1.75;
+}
+
+.measure {
+  max-width: 42ch;
+}
+
+.measure-wide {
+  max-width: 58ch;
+}
+
+/* Sections rendered on a dark ground flip their ink. */
+.on-dark,
+.on-dark h1,
+.on-dark h2,
+.on-dark h3,
+.on-dark h4 {
+  color: var(--color-ivory);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.shell {
+  width: 100%;
+  max-width: 88rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .shell {
+    padding-inline: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    padding-inline: 3rem;
+  }
+}
+
+/* A hairline in the palette rather than a default grey. */
+.rule {
+  height: 1px;
+  background-color: color-mix(in srgb, var(--color-espresso) 14%, transparent);
+}
+
+.on-dark .rule {
+  background-color: color-mix(in srgb, var(--color-ivory) 22%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1rem 2.25rem;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 260ms var(--ease-silk),
+    color 260ms var(--ease-silk),
+    border-color 260ms var(--ease-silk);
+  /* Comfortably above the 44px touch target minimum. */
+  min-height: 3rem;
+}
+
+.btn-solid {
+  background-color: var(--color-espresso);
+  color: var(--color-ivory);
+}
+
+.btn-solid:hover {
+  background-color: var(--color-plum);
+}
+
+.btn-outline {
+  border-color: color-mix(in srgb, var(--color-espresso) 30%, transparent);
+  color: var(--color-espresso);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-espresso);
+  color: var(--color-ivory);
+}
+
+.on-dark .btn-solid {
+  background-color: var(--color-ivory);
+  color: var(--color-espresso);
+}
+
+.on-dark .btn-solid:hover {
+  background-color: var(--color-champagne);
+}
+
+.on-dark .btn-outline {
+  border-color: color-mix(in srgb, var(--color-ivory) 45%, transparent);
+  color: var(--color-ivory);
+}
+
+.on-dark .btn-outline:hover {
+  background-color: var(--color-ivory);
+  color: var(--color-espresso);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOCUS AND SKIP LINK
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:focus-visible {
+  outline: 2px solid var(--color-plum);
+  outline-offset: 3px;
+}
+
+.on-dark :focus-visible {
+  outline-color: var(--color-champagne);
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 200;
+  background-color: var(--color-espresso);
+  color: var(--color-ivory);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: top 200ms var(--ease-silk);
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IMAGE FRAMES
+   ═══════════════════════════════════════════════════════════════════════════
+   A photograph that has not been supplied yet shows a labelled frame. It is
+   deliberately clear that it is waiting for a real cake rather than pretending
+   to be one.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-vanilla);
+}
+
+.frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.frame-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 12px,
+    color-mix(in srgb, var(--color-caramel) 12%, transparent) 12px,
+    color-mix(in srgb, var(--color-caramel) 12%, transparent) 13px
+  );
+  border: 1px solid color-mix(in srgb, var(--color-caramel) 35%, transparent);
+}
+
+.frame-empty span {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--color-cocoa-soft);
+  max-width: 20ch;
+  line-height: 1.8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLL REVEALS
+   ═══════════════════════════════════════════════════════════════════════════
+   Small, restrained, and varied. Elements start in their revealed state and
+   are only hidden once JavaScript confirms it can animate them, so nothing is
+   ever left invisible waiting for an animation that will not run.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-reveal] {
+  will-change: transform, opacity;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE PROGRESS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  z-index: 90;
+  pointer-events: none;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background-color: color-mix(in srgb, var(--color-plum) 55%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATION KEYFRAMES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scroll-cue {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(6px);
+    opacity: 1;
+  }
+}
+
+.animate-scroll-cue {
+  animation: scroll-cue 2.4s var(--ease-silk) infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODALS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background-color: color-mix(in srgb, var(--color-near-black) 62%, transparent);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 260ms var(--ease-silk);
+}
+
+.modal-backdrop[data-open="true"] {
+  opacity: 1;
+}
+
+.modal-panel {
+  position: relative;
+  width: 100%;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background-color: var(--color-ivory);
+  opacity: 0;
+  transform: scale(0.97);
+  transition:
+    opacity 280ms var(--ease-silk),
+    transform 280ms var(--ease-silk);
+}
+
+.modal-panel[data-open="true"] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Contact rows arrive with a small stagger once the panel is open. */
+.modal-panel[data-open="true"] [data-stagger] {
+  animation: rise 460ms var(--ease-silk) both;
+  animation-delay: calc(var(--index, 0) * 45ms + 90ms);
+}
+
+/* Scroll is locked while any dialog is open. */
+html.dialog-open,
+html.dialog-open body {
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════════════════════════════════════
+   Honoured everywhere. Content still appears — only the movement is removed,
+   so nothing is left invisible waiting for an animation that will not run.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Anything staged for a scroll reveal is simply shown. */
+    .progress {
+    display: none;
+  }
+}
