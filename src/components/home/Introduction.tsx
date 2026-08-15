@@ -58,16 +58,23 @@ export function Introduction() {
         );
 
       // The photographs drift a touch slower than the page.
-      gsap.to("[data-primary] img", {
-        yPercent: 6,
-        ease: "none",
-        scrollTrigger: {
-          trigger: rootRef.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true,
-        },
-      });
+      //
+      // Only when there is a photograph to drift. Before the real photography
+      // arrives these slots render a labelled frame with no <img> inside, and
+      // GSAP warns about a missing target on every page load.
+      const primaryImage = rootRef.current?.querySelector("[data-primary] img");
+      if (primaryImage) {
+        gsap.to(primaryImage, {
+          yPercent: 6,
+          ease: "none",
+          scrollTrigger: {
+            trigger: rootRef.current,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
     },
     { scope: rootRef },
   );
