@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "assets": "node scripts/prepare-assets.mjs"
+    "assets": "node scripts/prepare-assets.mjs",
+    "dev:webpack": "next dev --webpack",
+    "build:webpack": "next build --webpack"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
