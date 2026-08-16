@@ -114,15 +114,21 @@ body {
   overflow-x: hidden;
 }
 
-/* A very fine paper grain. Keeps large ivory areas from looking flat. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+/*
+   A very fine paper grain, so large ivory areas do not look flat.
+
+   Painted straight onto the body rather than through a fixed, full-viewport
+   pseudo-element. That older approach created a composited layer the size of
+   the screen which the compositor had to blend over every frame while
+   scrolling — on a large monitor, several million pixels of work per frame for
+   an effect at 3.5% opacity.
+
+   The opacity is baked into the SVG instead of applied to a layer, and the
+   turbulence is generated once and tiled, so this now costs a single texture
+   upload and nothing thereafter.
+*/
+body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
 }
 
 h1,

@@ -93,7 +93,11 @@ export function Header() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-[100] transition-[background-color,backdrop-filter,border-color] duration-500 ${
+      // Only colour is transitioned. backdrop-filter was in this list, which
+      // meant the blur was recomputed across the full header width on every
+      // frame of a 500ms transition, each time the scroll threshold was
+      // crossed — one of the most expensive things a browser can animate.
+      className={`fixed inset-x-0 top-0 z-[100] transition-[background-color,border-color] duration-500 ${
         solid
           ? "border-b border-espresso/10 bg-ivory/85 backdrop-blur-md"
           : "on-dark border-b border-transparent"
