@@ -10,9 +10,8 @@ import { gsap, prefersReducedMotion } from "@/lib/motion";
  * The business introduction.
  *
  * Deliberately not an "About us" box with a picture on one side and text on the
- * other. The dominant photograph is offset against a smaller detail shot that
- * overlaps it, the heading arrives a line at a time, and a hairline draws
- * itself across the section as it enters.
+ * other. A single photograph holds the wider column, the heading arrives a line
+ * at a time, and a hairline draws itself across the section as it enters.
  */
 export function Introduction() {
   const rootRef = useRef<HTMLElement>(null);
@@ -50,11 +49,6 @@ export function Introduction() {
           "[data-primary]",
           { clipPath: "inset(0 0 100% 0)", duration: 1.25, ease: "power3.inOut" },
           0.1,
-        )
-        .from(
-          "[data-detail]",
-          { opacity: 0, y: 44, scale: 0.94, duration: 1.1, ease: "power3.out" },
-          0.65,
         );
 
       // The photographs drift a touch slower than the page.
@@ -149,20 +143,6 @@ export function Introduction() {
                   {introduction.primaryImage.caption}
                 </p>
               )}
-            </div>
-
-            {/* The smaller detail, overlapping the corner of the main shot. */}
-            <div
-              data-detail
-              className="absolute -bottom-10 -left-4 w-36 sm:w-48 lg:-left-16 lg:w-60"
-            >
-              <CakeImage
-                src={introduction.detailImage.src}
-                alt={introduction.detailImage.alt}
-                label="Cake detail"
-                className="aspect-square w-full shadow-[0_24px_60px_rgb(42_29_23/0.18)]"
-                sizes="(min-width: 1024px) 15vw, 40vw"
-              />
             </div>
           </div>
         </div>

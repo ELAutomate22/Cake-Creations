@@ -200,16 +200,11 @@ export const introduction = {
   /** An optional second paragraph. Leave "" to hide it. */
   bodySecondary: "[BUSINESS DESCRIPTION]",
 
-  /** The dominant photograph. */
+  /** The one photograph in this section. */
   primaryImage: {
     src: "/cakes/ivory-rose-birthday.jpg",
     alt: "An ivory and ruby birthday cake dressed with fresh roses and piped pearls",
     caption: "Ivory & Rose Birthday Cake",
-  },
-  /** A smaller detail shot, overlapping the main photograph. */
-  detailImage: {
-    src: "/cakes/gold-leaf-detail.jpg",
-    alt: "A close view of a hand-painted chevron band finished with a torn edge of gold leaf",
   },
 } as const;
 
