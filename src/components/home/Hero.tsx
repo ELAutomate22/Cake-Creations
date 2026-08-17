@@ -19,7 +19,15 @@ import { useSiteUI } from "@/components/layout/SiteChrome";
  * The movement is scrubbed against real scroll position rather than played once
  * on entry, so it tracks the visitor's own gesture — including scrolling back.
  */
-export function Hero() {
+export type HeroProps = {
+  /**
+   * The line beneath the business name, chosen per request on the server so it
+   * changes on every visit. Falls back to the fixed one in the content file.
+   */
+  statement?: string;
+};
+
+export function Hero({ statement }: HeroProps) {
   const { openContact } = useSiteUI();
   const rootRef = useRef<HTMLElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -122,7 +130,7 @@ export function Hero() {
           </h1>
 
           <p data-hero-line className="voice measure mt-7 text-ivory/85">
-            {business.brandStatement}
+            {statement ?? business.brandStatement}
           </p>
 
           <div data-hero-line className="mt-11 flex flex-wrap gap-4">

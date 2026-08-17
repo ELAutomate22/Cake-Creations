@@ -31,7 +31,13 @@ export const business = {
   /** The exact business name. Do not abbreviate or re-spell. */
   name: "Elshadai Cake Creations",
 
-  /** Shown in the hero, beneath the business name. */
+  /**
+   * A single fixed line beneath the business name in the hero.
+   *
+   * Leave this as a placeholder and the hero rotates through
+   * `brandStatements` below instead, showing a different one on every visit.
+   * Fill it in and that one line is used every time, permanently.
+   */
   brandStatement: "[BRAND STATEMENT TO BE PROVIDED LATER]",
 
   /** One line, used in the footer and in search results. */
@@ -50,6 +56,41 @@ export const business = {
   /** Public web address once the domain is live. Used for SEO links. */
   url: "https://www.elshadaicakecreations.co.uk",
 } as const;
+
+/**
+ * Lines that rotate beneath the business name in the hero.
+ *
+ * One is chosen at random on every visit, and never the same one twice in a
+ * row. Add, remove or rewrite freely — the hero uses however many are here.
+ *
+ * Two rules if you write your own. Keep them short, because this sits under a
+ * large heading and a long line wraps awkwardly on a phone. And keep them to
+ * things that are true of the design and the care taken: no promises about
+ * ingredients, hygiene, delivery or awards that the business would have to
+ * stand behind.
+ */
+export const brandStatements: string[] = [
+  "Every celebration deserves a cake of its own.",
+  "Designed around the day it is made for.",
+  "The centrepiece, not the afterthought.",
+  "Personalised and classic cakes, finished by hand.",
+  "Made for the moment you will want to remember.",
+  "A cake worth gathering around.",
+  "Classic when you want it, personal when it counts.",
+  "Cakes that look like the occasion they are for.",
+  "Where the detail is the whole point.",
+  "Handmade for milestones, large and small.",
+  "Designed to be admired before it is cut.",
+  "For birthdays, weddings, and everything in between.",
+  "Finished by hand, down to the last pearl.",
+  "A cake as considered as the celebration.",
+  "Made once, for one occasion, for you.",
+  "Your celebration, given its centrepiece.",
+  "The part of the day everyone photographs.",
+  "Created for the people being celebrated.",
+  "Personalised or classic. Always considered.",
+  "One cake, shaped entirely around one day.",
+];
 
 /* ═══════════════════════════════════════════════════════════════════════════
    2. CONTACT DETAILS

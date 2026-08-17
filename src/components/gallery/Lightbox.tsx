@@ -143,6 +143,9 @@ export function Lightbox({
               className="max-h-[68svh] w-full"
               sizes="(min-width: 1024px) 70vw, 100vw"
               imageClassName="!object-contain"
+              // The visitor opened this to look at the cake. Collapsing it
+              // under their pointer is the opposite of what they asked for.
+              hover={false}
             />
           </div>
 

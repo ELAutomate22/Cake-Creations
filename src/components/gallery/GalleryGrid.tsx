@@ -148,7 +148,6 @@ export function GalleryGrid() {
                 label={cake.title}
                 className="h-full w-full"
                 sizes="(min-width: 1024px) 30vw, (min-width: 640px) 48vw, 100vw"
-                imageClassName="transition-transform duration-[900ms] ease-[var(--ease-silk)] group-hover:scale-[1.04]"
               />
 
               {/* A restrained caption, revealed on hover and on focus. */}

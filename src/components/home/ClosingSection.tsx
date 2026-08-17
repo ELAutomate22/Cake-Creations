@@ -82,6 +82,9 @@ export function ClosingSection() {
           label="Closing cake photograph"
           className="h-full w-full"
           sizes="100vw"
+          // A full-screen backdrop behind the closing words, already darkened
+          // and drifting on scroll. Hovering it is just crossing the page.
+          hover={false}
         />
         <div
           aria-hidden="true"

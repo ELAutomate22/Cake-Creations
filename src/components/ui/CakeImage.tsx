@@ -1,5 +1,6 @@
 import Image from "next/image";
 import manifest from "@/content/asset-manifest.json";
+import { RepetitionHover } from "./RepetitionHover";
 
 /**
  * A cake photograph, or an honest frame where one has not been supplied yet.
@@ -39,6 +40,14 @@ export type CakeImageProps = {
   priority?: boolean;
   /** Applied to the <img> itself, for scale-on-hover and similar. */
   imageClassName?: string;
+  /**
+   * The repetition hover effect, on by default.
+   *
+   * Turn it off for a photograph that is not a photograph the visitor looks at
+   * — a full-bleed background behind copy, say, where a pointer crossing the
+   * page would set the whole viewport rippling.
+   */
+  hover?: boolean;
 };
 
 export function CakeImage({
@@ -49,6 +58,7 @@ export function CakeImage({
   sizes = "(min-width: 1024px) 50vw, 100vw",
   priority = false,
   imageClassName = "",
+  hover = true,
 }: CakeImageProps) {
   const hasImage = Boolean(src && src.trim().length > 0);
 
@@ -66,6 +76,21 @@ export function CakeImage({
     !alt || (alt.trim().startsWith("[") && alt.trim().endsWith("]"));
 
   const blurDataURL = blurFor(src as string);
+
+  if (hover) {
+    return (
+      <div className={`frame ${className}`}>
+        <RepetitionHover
+          src={src as string}
+          alt={isPlaceholderAlt ? "" : alt}
+          sizes={sizes}
+          priority={priority}
+          imageClassName={imageClassName}
+          blurDataURL={blurDataURL}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`frame ${className}`}>

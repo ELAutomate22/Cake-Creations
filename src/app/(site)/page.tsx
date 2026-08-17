@@ -9,8 +9,12 @@ import { ReviewsSection } from "@/components/reviews/ReviewsSection";
 import { ClosingSection } from "@/components/home/ClosingSection";
 import { RevealScope } from "@/components/motion/RevealScope";
 import { ScrollProgress } from "@/components/motion/ScrollProgress";
+import { pickBrandStatement } from "@/lib/brand-statement";
 
-/** Reviews are read on each request, so a new one appears without a rebuild. */
+/**
+ * Reviews are read on each request, so a new one appears without a rebuild.
+ * The hero's rotating statement rides on the same per-request rendering.
+ */
 export const dynamic = "force-dynamic";
 
 /**
@@ -26,7 +30,9 @@ export default function HomePage() {
     <RevealScope>
       <ScrollProgress />
 
-      <Hero />
+      {/* Chosen here, on the server, so it is correct in the first byte of
+          HTML rather than swapped in after the page has appeared. */}
+      <Hero statement={pickBrandStatement()} />
       <Introduction />
       <FeaturedCarousel />
       <EditorialShowcase />

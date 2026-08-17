@@ -374,6 +374,26 @@ h4 {
   object-fit: cover;
 }
 
+/* ── Repetition hover ──────────────────────────────────────────────────────
+   Stacked copies of one photograph. They sit exactly on top of each other and
+   are moved only with transforms, so the effect runs on the compositor and
+   never asks the browser to lay the page out again mid-hover.
+
+   `.frame` already clips, so a copy scaled past the edge is cut off there and
+   needs no mask of its own. */
+
+.repetition {
+  position: absolute;
+  inset: 0;
+}
+
+.repetition__layer {
+  position: absolute;
+  inset: 0;
+  /* Inherited so the whole stack collapses towards the same point. */
+  transform-origin: inherit;
+}
+
 .frame-empty {
   display: flex;
   align-items: center;
