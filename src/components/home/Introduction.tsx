@@ -135,7 +135,11 @@ export function Introduction() {
                 src={introduction.primaryImage.src}
                 alt={introduction.primaryImage.alt}
                 label="Main introduction cake photograph"
-                className="aspect-[4/5] w-full sm:aspect-[3/2] lg:aspect-[4/5]"
+                // 4:3 rather than 3:2 in the tablet band. The photographs are
+                // framed upright at 4:5, and a 3:2 window centred on one cuts
+                // through the cake itself — 4:3 keeps the whole cake in frame
+                // while still widening out from the phone layout.
+                className="aspect-[4/5] w-full sm:aspect-[4/3] lg:aspect-[4/5]"
                 sizes="(min-width: 1024px) 58vw, 100vw"
                 imageClassName="scale-105"
               />

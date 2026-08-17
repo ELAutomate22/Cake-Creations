@@ -127,15 +127,24 @@ export const media = {
   hero: {
     /** An optional short cake video for the hero. Leave "" to use the photo. */
     video: "",
-    /** The hero photograph. */
-    image: "",
-    alt: "[CAKE DESCRIPTION]",
+    /**
+     * The hero photograph, framed twice.
+     *
+     * `image` is the upright frame, used on phones and tablets. `imageWide` is
+     * the same cake framed landscape and is used from large screens up, where a
+     * single upright photograph would have to be cropped into a close-up to
+     * fill the width. Leave `imageWide` as "" and the upright one is used
+     * everywhere.
+     */
+    image: "/media/hero-lakeside.jpg",
+    imageWide: "/media/hero-lakeside-wide.jpg",
+    alt: "A three-tier marble wedding cake dressed in dusty roses, photographed against a window over the lake",
   },
 
   /** The large photograph in the closing section before the footer. */
   closing: {
-    image: "",
-    alt: "[CAKE DESCRIPTION]",
+    image: "/media/closing-wedding.jpg",
+    alt: "A navy and gold two-tier wedding cake dressed with a sugar rose, photographed against gold drapery",
   },
 } as const;
 
@@ -152,14 +161,14 @@ export const introduction = {
 
   /** The dominant photograph. */
   primaryImage: {
-    src: "",
-    alt: "[CAKE DESCRIPTION]",
-    caption: "[CAKE NAME]",
+    src: "/cakes/ivory-rose-birthday.jpg",
+    alt: "An ivory and ruby birthday cake dressed with fresh roses and piped pearls",
+    caption: "Ivory & Rose Birthday Cake",
   },
   /** A smaller detail shot, overlapping the main photograph. */
   detailImage: {
-    src: "",
-    alt: "[CAKE DESCRIPTION]",
+    src: "/cakes/gold-leaf-detail.jpg",
+    alt: "A close view of a hand-painted chevron band finished with a torn edge of gold leaf",
   },
 } as const;
 
@@ -180,7 +189,10 @@ export const featured = [
       "Designed around a chosen person, age, theme, colour scheme, interest or celebration.",
     occasion: "For any celebration",
     flavour: "[FLAVOUR INFORMATION]",
-    image: { src: "", alt: "[CAKE DESCRIPTION]" },
+    image: {
+      src: "/cakes/quilted-handbag.jpg",
+      alt: "A hand-sculpted quilted handbag cake with gold hardware and a gilded forty",
+    },
     galleryFilter: "personalised",
   },
   {
@@ -192,7 +204,10 @@ export const featured = [
       "Timeless and elegant cake designs with refined decoration and traditional presentation.",
     occasion: "For understated celebrations",
     flavour: "[FLAVOUR INFORMATION]",
-    image: { src: "", alt: "[CAKE DESCRIPTION]" },
+    image: {
+      src: "/cakes/gold-script-birthday.jpg",
+      alt: "A cream ribbed buttercream cake with a gold script drawing and paper florals",
+    },
     galleryFilter: "classic",
   },
   {
@@ -204,7 +219,10 @@ export const featured = [
       "Cakes created for weddings, birthdays, christenings, anniversaries, graduations and other events.",
     occasion: "For milestone moments",
     flavour: "[FLAVOUR INFORMATION]",
-    image: { src: "", alt: "[CAKE DESCRIPTION]" },
+    image: {
+      src: "/cakes/plum-gold-tiers.jpg",
+      alt: "A three-tier plum and ivory celebration cake finished with gold leaf and piped pearls",
+    },
     galleryFilter: "all",
   },
 ] as const;
@@ -232,7 +250,10 @@ export const twoDirections = {
       "An age, a name or a message",
       "Decoration matched to the event styling",
     ],
-    image: { src: "", alt: "[CAKE DESCRIPTION]" },
+    image: {
+      src: "/cakes/stout-birthday.jpg",
+      alt: "A navy and ivory birthday cake themed around a favourite stout, topped with a gold fan",
+    },
   },
 
   classic: {
@@ -248,7 +269,10 @@ export const twoDirections = {
       "Refined, restrained colour",
       "Simple detail, carefully executed",
     ],
-    image: { src: "", alt: "[CAKE DESCRIPTION]" },
+    image: {
+      src: "/cakes/pearl-rose-thirty.jpg",
+      alt: "A blush thirtieth birthday cake with a piped pearl number and sugar roses",
+    },
   },
 } as const;
 
@@ -343,23 +367,35 @@ export const showcase = {
     {
       id: "personalised",
       word: "Personalised",
-      caption: "[CAKE NAME]",
-      description: "[CAKE DESCRIPTION]",
-      image: { src: "", alt: "[CAKE DESCRIPTION]" },
+      caption: "Ivory & Teal Fortieth",
+      description:
+        "Ribbed teal panels, a gilded forty and a cluster of navy and gold spheres.",
+      image: {
+        src: "/cakes/ivory-teal-forty.jpg",
+        alt: "An ivory fortieth birthday cake with ribbed teal panels and navy and gold spheres",
+      },
     },
     {
       id: "classic",
       word: "Classic",
-      caption: "[CAKE NAME]",
-      description: "[CAKE DESCRIPTION]",
-      image: { src: "", alt: "[CAKE DESCRIPTION]" },
+      caption: "Gilded Cross Christening",
+      description:
+        "A single ivory tier marked with a burnished gold cross and a drift of gilded spheres.",
+      image: {
+        src: "/cakes/gilded-cross-christening.jpg",
+        alt: "A white christening cake finished with a gold cross and gilded spheres",
+      },
     },
     {
       id: "occasion",
       word: "Occasion",
-      caption: "[CAKE NAME]",
-      description: "[CAKE DESCRIPTION]",
-      image: { src: "", alt: "[CAKE DESCRIPTION]" },
+      caption: "Silver Christmas",
+      description:
+        "An ivory cake with a poured silver drip and a hand-piped Christmas tree.",
+      image: {
+        src: "/cakes/silver-christmas.jpg",
+        alt: "An ivory Christmas cake with a poured silver drip and a hand-piped tree",
+      },
     },
   ],
 } as const;
@@ -408,11 +444,254 @@ export const gallery = {
   /**
    * Cakes shown in the Gallery.
    *
-   * This starts empty on purpose. Add photographs to `assets-source/`, run
-   * `npm run assets`, then add an entry here for each cake. Until then the
-   * Gallery shows a short note rather than pretending to have work in it.
+   * To add one: put the photograph in `assets-source/`, run `npm run assets`,
+   * then copy an entry below and fill it in. The `size` must match the shape
+   * the photograph was cropped to — "regular" and "feature" are 4:5, "tall" is
+   * 3:5 and "wide" is 16:10 — otherwise the tile crops the cake again.
+   *
+   * The order below is the order they appear in, arranged so the two feature
+   * tiles and the one wide tile are spaced out rather than bunched together.
    */
-  cakes: [] as GalleryCake[],
+  cakes: [
+    {
+      id: "gilded-cross-christening",
+      title: "Gilded Cross Christening Cake",
+      style: "classic",
+      occasion: "christening",
+      description:
+        "A single tier in soft ivory, marked with a burnished gold cross and a drift of gilded spheres, finished with a hand-lettered topper.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/gilded-cross-christening.jpg",
+        alt: "A white christening cake finished with a gold cross, gilded spheres and a hand-lettered topper",
+      },
+      size: "feature",
+    },
+    {
+      id: "pearl-rose-thirtieth",
+      title: "Pearl & Rose Thirtieth",
+      style: "classic",
+      occasion: "birthday",
+      description:
+        "A blush buttercream tier with the number thirty picked out in piped pearls, crowned with sugar roses.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/pearl-rose-thirty.jpg",
+        alt: "A blush thirtieth birthday cake with a piped pearl number and sugar roses",
+      },
+      size: "regular",
+    },
+    {
+      id: "stout-birthday",
+      title: "Stout Birthday Cake",
+      style: "personalised",
+      occasion: "birthday",
+      description:
+        "Built around a favourite drink: ribbed ivory over deep navy, a hand-finished emblem and a gold palm fan above.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/stout-birthday.jpg",
+        alt: "A navy and ivory birthday cake themed around a favourite stout, topped with a gold fan",
+      },
+      size: "tall",
+    },
+    {
+      id: "quilted-handbag",
+      title: "Quilted Handbag Cake",
+      style: "personalised",
+      occasion: "birthday",
+      description:
+        "Sculpted by hand into a quilted clutch, complete with a gold chain strap, a working-looking clasp and a gilded forty.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/quilted-handbag-wide.jpg",
+        alt: "A hand-sculpted quilted handbag cake with a gold chain strap, seen from three quarters",
+      },
+      size: "wide",
+    },
+    {
+      id: "ivory-rose-birthday",
+      title: "Ivory & Rose Birthday Cake",
+      style: "classic",
+      occasion: "birthday",
+      description:
+        "Ivory over ruby, studded with piped pearls and finished with cream and crimson roses.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/ivory-rose-birthday.jpg",
+        alt: "An ivory and ruby birthday cake dressed with fresh roses and piped pearls",
+      },
+      size: "regular",
+    },
+    {
+      id: "ivory-teal-fortieth",
+      title: "Ivory & Teal Fortieth",
+      style: "personalised",
+      occasion: "birthday",
+      description:
+        "Ribbed teal panels framing a gilded forty, with a cluster of navy, white and gold spheres.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/ivory-teal-forty.jpg",
+        alt: "An ivory fortieth birthday cake with ribbed teal panels and navy and gold spheres",
+      },
+      size: "regular",
+    },
+    {
+      id: "lakeside-wedding",
+      title: "Lakeside Wedding Tiers",
+      style: "classic",
+      occasion: "wedding",
+      description:
+        "Three tiers moving from marbled grey through a monogrammed terracotta band to soft stone, dressed in dusty roses.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/media/hero-lakeside.jpg",
+        alt: "A three-tier marble wedding cake with a monogrammed terracotta tier and dusty sugar roses",
+      },
+      size: "feature",
+    },
+    {
+      id: "gold-script-birthday",
+      title: "Gold Script Birthday Cake",
+      style: "classic",
+      occasion: "birthday",
+      description:
+        "Ribbed cream buttercream carrying a gold script line drawing, finished with paper florals in red and blush.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/gold-script-birthday.jpg",
+        alt: "A cream ribbed buttercream cake with a gold script drawing and paper florals",
+      },
+      size: "regular",
+    },
+    {
+      id: "amethyst-gold-tiers",
+      title: "Amethyst & Gold Tiers",
+      style: "personalised",
+      occasion: "birthday",
+      description:
+        "Ribbed amethyst alternating with ivory, scattered with gold leaf and edged in piped pearls.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/amethyst-gold-tiers.jpg",
+        alt: "A three-tier purple and ivory cake with gold leaf and piped pearl detail",
+      },
+      size: "tall",
+    },
+    {
+      id: "navy-gold-wedding",
+      title: "Navy & Gold Wedding Cake",
+      style: "classic",
+      occasion: "wedding",
+      description:
+        "Two tiers washed from navy into brushed gold, banded in crystal and finished with a single sugar rose.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/media/closing-wedding.jpg",
+        alt: "A navy and gold two-tier wedding cake dressed with a sugar rose",
+      },
+      size: "regular",
+    },
+    {
+      id: "plum-gold-tiers",
+      title: "Plum & Gold Celebration Cake",
+      style: "personalised",
+      occasion: "birthday",
+      description:
+        "Three tiers alternating ribbed plum and ivory, gilded at the edges and topped with a gold fan.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/plum-gold-tiers.jpg",
+        alt: "A three-tier plum and ivory celebration cake finished with gold leaf and piped pearls",
+      },
+      size: "regular",
+    },
+    {
+      id: "copper-gold-chevron",
+      title: "Copper & Gold Chevron Cake",
+      style: "classic",
+      occasion: "birthday",
+      description:
+        "A stencilled chevron band over copper buttercream, split by a torn edge of gold leaf and crowned with rosettes.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/copper-gold-chevron.jpg",
+        alt: "A copper and ivory cake with a stencilled chevron band, gold leaf edge and piped rosettes",
+      },
+      size: "regular",
+    },
+    {
+      id: "rose-copper-rosette",
+      title: "Rose & Copper Rosette Cake",
+      style: "classic",
+      occasion: "birthday",
+      description:
+        "Lace-textured copper icing half covered by a spill of rose, slate and cream buttercream swirls.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/rose-copper-rosette.jpg",
+        alt: "A copper cake with lace-textured piping and a spill of rose and slate buttercream swirls",
+      },
+      size: "regular",
+    },
+    {
+      id: "pastel-baby-celebration",
+      title: "Pastel Baby Celebration Cake",
+      style: "personalised",
+      occasion: "baby-shower",
+      description:
+        "Sunlit yellow over sage, with a hand-piped shell border and the name written across a soft plaque.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/pastel-baby-celebration.jpg",
+        alt: "A yellow and sage baby celebration cake with a hand-piped shell border and a named plaque",
+      },
+      size: "regular",
+    },
+    {
+      id: "jungle-dinosaur",
+      title: "Jungle Dinosaur Cake",
+      style: "personalised",
+      occasion: "birthday",
+      description:
+        "A green ombré tier under a modelled jungle scene — sugar palms and three hand-shaped dinosaurs.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/jungle-dinosaur.jpg",
+        alt: "A green ombre cake topped with hand-modelled dinosaurs and sugar palm trees",
+      },
+      size: "regular",
+    },
+    {
+      id: "silver-christmas",
+      title: "Silver Christmas Cake",
+      style: "classic",
+      occasion: "seasonal",
+      description:
+        "An ivory tier under a poured silver drip, with a Christmas tree piped by hand and dusted in pearls.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/silver-christmas.jpg",
+        alt: "An ivory Christmas cake with a poured silver drip and a hand-piped tree",
+      },
+      size: "regular",
+    },
+    {
+      id: "ruby-christmas",
+      title: "Ruby Christmas Cake",
+      style: "personalised",
+      occasion: "seasonal",
+      description:
+        "Deep ruby beneath an ivory drip, finished with baubles in red, white and gold and a winter topper.",
+      flavour: "[FLAVOUR INFORMATION]",
+      image: {
+        src: "/cakes/ruby-christmas.jpg",
+        alt: "A ruby red Christmas cake with an ivory drip, baubles and a winter topper",
+      },
+      size: "regular",
+    },
+  ] as GalleryCake[],
 } as const;
 
 /* ═══════════════════════════════════════════════════════════════════════════

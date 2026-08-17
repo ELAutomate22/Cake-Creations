@@ -1,12 +1,30 @@
 import Image from "next/image";
+import manifest from "@/content/asset-manifest.json";
 
 /**
  * A cake photograph, or an honest frame where one has not been supplied yet.
  *
- * The website is being built before the photography exists, so every image slot
- * has to handle "not yet". Rather than a broken image or an invented stock
- * photo, an empty slot shows a labelled frame that says what belongs there.
+ * Photography can still be missing — the site was built before it existed — so
+ * an empty slot shows a labelled frame saying what belongs there rather than a
+ * broken image or an invented stock photo.
+ *
+ * Where a photograph does exist, the asset pipeline has already produced a
+ * twenty-pixel blurred copy of it. Handing that to next/image means the space
+ * is filled with the cake's own colours from the first paint, so the layout
+ * never flashes empty and then jumps.
  */
+
+type ManifestEntry = { blurDataURL?: string; path?: string };
+
+/** The blurred placeholder for a photograph, looked up by its public path. */
+function blurFor(src: string): string | undefined {
+  // "/cakes/pearl-rose-thirty.jpg" -> "pearl-rose-thirty"
+  const name = src.split("/").pop()?.replace(/\.[^.]+$/, "");
+  if (!name) return undefined;
+
+  const entry = (manifest as Record<string, ManifestEntry>)[name];
+  return entry?.blurDataURL;
+}
 
 export type CakeImageProps = {
   src?: string;
@@ -47,6 +65,8 @@ export function CakeImage({
   const isPlaceholderAlt =
     !alt || (alt.trim().startsWith("[") && alt.trim().endsWith("]"));
 
+  const blurDataURL = blurFor(src as string);
+
   return (
     <div className={`frame ${className}`}>
       <Image
@@ -56,6 +76,8 @@ export function CakeImage({
         fill
         sizes={sizes}
         priority={priority}
+        placeholder={blurDataURL ? "blur" : "empty"}
+        blurDataURL={blurDataURL}
         className={imageClassName}
       />
     </div>

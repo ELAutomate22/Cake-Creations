@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { business, media } from "@/content/site";
 import { CakeImage } from "@/components/ui/CakeImage";
+import { HeroPicture } from "@/components/ui/HeroPicture";
 import { gsap, prefersReducedMotion } from "@/lib/motion";
 import { useSiteUI } from "@/components/layout/SiteChrome";
 
@@ -26,6 +27,7 @@ export function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const hasVideo = Boolean(media.hero.video);
+  const hasImage = Boolean(media.hero.image);
 
   useGSAP(
     () => {
@@ -78,11 +80,20 @@ export function Hero() {
             aria-hidden="true"
             className="h-full w-full object-cover"
           />
+        ) : hasImage ? (
+          // The same cake framed upright and landscape; the browser fetches
+          // whichever one the viewport actually calls for.
+          <HeroPicture
+            src={media.hero.image}
+            wideSrc={media.hero.imageWide || undefined}
+            alt={media.hero.alt}
+            className="h-full w-full object-cover"
+          />
         ) : (
           <CakeImage
             src={media.hero.image}
             alt={media.hero.alt}
-            label="Hero cake photograph — add a landscape photograph named hero-*.jpg to assets-source and run npm run assets"
+            label="Hero cake photograph — add a photograph named hero-*.jpg to assets-source and run npm run assets"
             className="h-full w-full"
             sizes="100vw"
             priority

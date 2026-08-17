@@ -1,1 +1,214 @@
-{}
+{
+  "amethyst-gold-tiers": {
+    "name": "amethyst-gold-tiers",
+    "width": 522,
+    "height": 870,
+    "widths": [],
+    "blurDataURL": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAADQBACdASoUACEAPwl0q1Arpy2isBqtUbAhCWcAAD1MN1tLFiHANYs0dUDtOsua4AD+UXP/1pHguitxO4uB7PYiipikV3n8MV+jV2Qu8RkoijY+GU3u9ONkVIfzQSEJTpRQYwdOiR69sxHQ+AA=",
+    "path": "/cakes/amethyst-gold-tiers"
+  },
+  "closing-wedding": {
+    "name": "closing-wedding",
+    "width": 1080,
+    "height": 1350,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAADQBQCdASoUABkAPxF0sFAsJySisAgBgCIJbACdL3emwA/xRUlcVJuD3NCNqgP61e+rxqS7+wAAAP6Smn9kqHiu3DjfuXuy44Acdp6wHZiDvldhpSTQZh25p+13utWOpmph1i3knYw6tzgWT8m4qH+OtJWcwRKAowFb6KPP5nFQAA==",
+    "path": "/media/closing-wedding"
+  },
+  "copper-gold-chevron": {
+    "name": "copper-gold-chevron",
+    "width": 1179,
+    "height": 1474,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRn4AAABXRUJQVlA4IHIAAADwBACdASoUABkAPwlsrVArpiQit/VYAXAhCWIArDKAAXxelDKfu14HcxnzBdv8BAAA/BqUmUwTzZLCR5THY9j+wVQwP5KLOr0yvEOBZzecR5wSBUpkg2Tyv+sqefZuySM6mxGHnInyScy0sEYwGj2AAAA=",
+    "path": "/cakes/copper-gold-chevron"
+  },
+  "gilded-cross-christening": {
+    "name": "gilded-cross-christening",
+    "width": 1502,
+    "height": 1878,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAAAQBQCdASoUABkAPxF4sFCsJ6SisAgBgCIJZQDGfCG7t1tLMzwzQJwAghD+LPvhLaoAAP5RvYgSxGnIO2xk1ZiHZA6LnRrj1XNs+WzGFOn/6GumRn2eJEfbJRG1pf/Mg8gR3UBwAAA=",
+    "path": "/cakes/gilded-cross-christening"
+  },
+  "gold-leaf-detail": {
+    "name": "gold-leaf-detail",
+    "width": 680,
+    "height": 680,
+    "widths": [
+      640
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAACQAwCdASoUABQAPxF+slSsKCQjKAqpgCIJYwAAO3t71iHIoyCAAP7jKd8+FpVk6g3+Sb2WsiBJ33XF5fJw7odPFSn9GCGti8mJrqogAAA=",
+    "path": "/cakes/gold-leaf-detail"
+  },
+  "gold-script-birthday": {
+    "name": "gold-script-birthday",
+    "width": 1080,
+    "height": 1350,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAADwAwCdASoUABkAPxF6t1OsJ6WiqAqpgCIJQBdmZfgluaW0ZVs4c3hwAPhCJ0D1Tp5y34ktSpow+grBTHd4CoUj5e5E+LxuCsdbh+X7FhUTdQF/FUN0G1BaQ8hV/Jar9rMAAAAA",
+    "path": "/cakes/gold-script-birthday"
+  },
+  "hero-lakeside-wide": {
+    "name": "hero-lakeside-wide",
+    "width": 1126,
+    "height": 633,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADQAwCdASoUAAsAPxF2sVCsJySisAgBgCIJYwCdABmVFL/wJWQjIAAAzS6PrB/DoHe9QAOBZaKcieQcsqXY560HiUTRCY7FAAA=",
+    "path": "/media/hero-lakeside-wide"
+  },
+  "hero-lakeside": {
+    "name": "hero-lakeside",
+    "width": 1126,
+    "height": 1408,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAADwBACdASoUABkAPxFurlGsJaQisBgMAYAiCWUAxNgQLXB3kQyap/AhxddWTBQoaAAA/sP+5DSS9etzwiaMJGEpqYhnRZDYpzc6kEQ7Cs79vBmf73VW17FBM+j58GpIfRlzrdcAAAA=",
+    "path": "/media/hero-lakeside"
+  },
+  "ivory-rose-birthday": {
+    "name": "ivory-rose-birthday",
+    "width": 1465,
+    "height": 1831,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAABwBQCdASoUABkAPxF4tVOsJyUiqAqpgCIJQBTihpTc5og3UzZqXICtWoLcONpG1t+O+ZMAAP7DWZ4qxOXOG7ixncPbO/gOAOgHJtQ+/7mXk/Yef8c4b2uUur4k94VTd4lisyWghRZVW0Tk1nSOQfyYScGcqAAA",
+    "path": "/cakes/ivory-rose-birthday"
+  },
+  "ivory-teal-forty": {
+    "name": "ivory-teal-forty",
+    "width": 1104,
+    "height": 1380,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAADwBACdASoUABkAPw10sVAsJySisBgMAYAhiWMAx+QQ4lzNuxEQHirHYG2NEQrHHoQA/cxH6CudfF4sgCJY1Td9AzJU6X+YLIMYPXzF8gsoWpd92m8xMqKeeNGoAA==",
+    "path": "/cakes/ivory-teal-forty"
+  },
+  "jungle-dinosaur": {
+    "name": "jungle-dinosaur",
+    "width": 816,
+    "height": 1020,
+    "widths": [
+      640
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRoAAAABXRUJQVlA4IHQAAACwBACdASoUABkAPxF2slCsJySisAgBgCIJZgC1EK0A3Tq85BnXNV0rGpaRAbIAAP7QLMln4GJnpWxRoaDHi6NAnFHqFE2cktkCDAgN0nikIvx0Ww2tkuEpNjY87sM0+3U5fz/s3FgdWkMCQxKU0+W0xRAAAA==",
+    "path": "/cakes/jungle-dinosaur"
+  },
+  "pastel-baby-celebration": {
+    "name": "pastel-baby-celebration",
+    "width": 1229,
+    "height": 1536,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAACwBQCdASoUABkAPxFwrlAsJiQisBgMAYAiCWwAnTM0O08WgWfUfwIwtqIrtdLtzFLr4tBmFgAA/oxp7bkYV0Clq7H/GuIm/Jr405Isgz7j1H3KgjGHjgW/R7RTYnhYrBGxnUJLOe2keJx1XxMrr/3wbh6HND7devflH/MeMnpQDAPPvV04kngA",
+    "path": "/cakes/pastel-baby-celebration"
+  },
+  "pearl-rose-thirty": {
+    "name": "pearl-rose-thirty",
+    "width": 1081,
+    "height": 1352,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAADQBACdASoUABkAPxF8tlQsJ6UjKAqpgCIJZAC2+y/FJ0waTWyITR/nPKbwtWUgAAD+5ycbuCmIfY5p7OSlvAKSd4tRjxkNaUO9io5pqAjAQ+g8k0erW0FxrhbFRB6B0bbfEpeAAAA=",
+    "path": "/cakes/pearl-rose-thirty"
+  },
+  "plum-gold-tiers": {
+    "name": "plum-gold-tiers",
+    "width": 1137,
+    "height": 1421,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAAAwBQCdASoUABkAPxFwslMsJaSisBgIAYAiCWoAnTLQwMd/xu48G3T0vagaPN/V/MDvgADvOope6vkhB6R1VUHhQFWMw7rOV2nYOPKvFYH3p+c3F7KHZT72mJ3pmItC+5xv59/hbrwMv7eDqVf2MBPbz3hiQPa0aatA0EuMySAAAA==",
+    "path": "/cakes/plum-gold-tiers"
+  },
+  "quilted-handbag-wide": {
+    "name": "quilted-handbag-wide",
+    "width": 1376,
+    "height": 860,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAACwAwCdASoUAAwAPxF4slEsJ6SisAgBgCIJZwDCgB0d2wL9X064EAD+b3RuGFsNxIdVIm0Pi8+Lk6v3/hm4p+lvOUq5NZ0htjwRih0KbCAAAA==",
+    "path": "/cakes/quilted-handbag-wide"
+  },
+  "quilted-handbag": {
+    "name": "quilted-handbag",
+    "width": 1024,
+    "height": 1280,
+    "widths": [
+      640
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAACQBACdASoUABkAPxF6tFIsJ6UiqA1RgCIJZQC+SA7ZvJbp/XaiG2xy+Xr1GwAA/rwU9dSBzt5nz7DSGADH41mZ3cL0KjYZ6uz0yEM/pnHasmQxdj1sOZoP1kv052/YAAA=",
+    "path": "/cakes/quilted-handbag"
+  },
+  "rose-copper-rosette": {
+    "name": "rose-copper-rosette",
+    "width": 1140,
+    "height": 1425,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAAAQBQCdASoUABkAPxF4sVIsJySiqA1RgCIJQBWGcdgxEWXHfzpF82o2YX9bagx+d9jAAP7lncmqTtpodFiyIDmxLmU4OpVKSULZAUUq6ERA9oTvvYTfUdDAltRWX+K8CdqXpgGn3AC6wAAA",
+    "path": "/cakes/rose-copper-rosette"
+  },
+  "ruby-christmas": {
+    "name": "ruby-christmas",
+    "width": 730,
+    "height": 912,
+    "widths": [
+      640
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAABQBACdASoUABkAPwVurVArpqQisAwBcCCJZAC7M2QCbwPvpkq2anq2jXiAAP6M9GJWNsKn5MahvvVwBjTZ1JFW9x5mA6jF14hTxKJtwSFcOMoDAJNj9V8tMsiIAA==",
+    "path": "/cakes/ruby-christmas"
+  },
+  "silver-christmas": {
+    "name": "silver-christmas",
+    "width": 1140,
+    "height": 1425,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAACQAwCdASoUABkAPvFkp1AppaOit+gBMB4JZwAAg2119Zi+oLQAAP3O+45yZo64lZ8rolbB+u7vIPR/7tv3nS4FKwNTjDN3o/iR4+m/pt9wHL1AAAA=",
+    "path": "/cakes/silver-christmas"
+  },
+  "stout-birthday": {
+    "name": "stout-birthday",
+    "width": 960,
+    "height": 1600,
+    "widths": [
+      640
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRqwAAABXRUJQVlA4IKAAAAAwBgCdASoUACEAPwVwq1ArpqOitVv4AXAgiUAWo3gtjoQrZVAt/F6GWkABYR6XqKSzDuT8pG5zmQcAAP6mYoFi8S55KFlOpok+noqG4rgWZ+Q9aA6GiXW9hdpS4oxvYfCqV4vlc1P72sLhvcN1NCL8GA9notWO9x/+QCboP0hdWTvsxImIS5xSSPKkWojeVn/adqSqSxQ4GpjXgreINYAA",
+    "path": "/cakes/stout-birthday"
+  }
+}
