@@ -89,14 +89,31 @@ export function Hero({ statement }: HeroProps) {
             className="h-full w-full object-cover"
           />
         ) : hasImage ? (
-          // The same cake framed upright and landscape; the browser fetches
-          // whichever one the viewport actually calls for.
-          <HeroPicture
-            src={media.hero.image}
-            wideSrc={media.hero.imageWide || undefined}
-            alt={media.hero.alt}
-            className="h-full w-full object-cover"
-          />
+          /*
+           * The photograph stands in a band down the middle rather than being
+           * blown up to cover the screen, so the cake is seen whole. The band
+           * is what carries the blend: masking the full-bleed layer would fade
+           * at the window edges, which is nowhere near the photograph.
+           *
+           * The band takes the photograph's own 4:5 shape, so `cover` has
+           * nothing to crop and the cake arrives whole, topper and board
+           * included. A fixed width would not: at the hero's proportions it
+           * would take a sixth off the top and bottom.
+           *
+           * On a phone the ratio would ask for more width than there is, so
+           * `max-w-full` caps it and the band fills the screen instead — which
+           * is what a phone wants anyway.
+           */
+          <div className="absolute inset-0 flex justify-center">
+            <div className="hero-blend relative h-full aspect-[4/5] max-w-full">
+              <HeroPicture
+                src={media.hero.image}
+                wideSrc={media.hero.imageWide || undefined}
+                alt={media.hero.alt}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
         ) : (
           <CakeImage
             src={media.hero.image}

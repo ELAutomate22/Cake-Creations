@@ -169,17 +169,19 @@ export const media = {
     /** An optional short cake video for the hero. Leave "" to use the photo. */
     video: "",
     /**
-     * The hero photograph, framed twice.
+     * The hero photograph.
      *
-     * `image` is the upright frame, used on phones and tablets. `imageWide` is
-     * the same cake framed landscape and is used from large screens up, where a
-     * single upright photograph would have to be cropped into a close-up to
-     * fill the width. Leave `imageWide` as "" and the upright one is used
-     * everywhere.
+     * It is shown whole rather than cropped to fill the screen, standing in a
+     * band down the middle of the hero with its left and right edges dissolving
+     * into the background colour.
+     *
+     * `imageWide` is an optional second framing of the same cake for large
+     * screens. It is not needed while the photograph is shown contained — that
+     * was a workaround for filling the full width — so it is left empty.
      */
-    image: "/media/hero-lakeside.jpg",
-    imageWide: "/media/hero-lakeside-wide.jpg",
-    alt: "A three-tier marble wedding cake dressed in dusty roses, photographed against a window over the lake",
+    image: "/media/hero-plum-gold.jpg",
+    imageWide: "",
+    alt: "A three-tier plum and ivory celebration cake finished with gold leaf, piped pearls and a gold fan topper",
   },
 
   /** The large photograph in the closing section before the footer. */
@@ -255,9 +257,11 @@ export const featured = [
       "Cakes created for weddings, birthdays, christenings, anniversaries, graduations and other events.",
     occasion: "For milestone moments",
     flavour: "[FLAVOUR INFORMATION]",
+    // Not the plum tiers any more — that cake now opens the page in the hero,
+    // and showing it twice on one screenful reads as a short portfolio.
     image: {
-      src: "/cakes/plum-gold-tiers.jpg",
-      alt: "A three-tier plum and ivory celebration cake finished with gold leaf and piped pearls",
+      src: "/cakes/pastel-baby-celebration.jpg",
+      alt: "A yellow and sage baby celebration cake with a hand-piped shell border and a named plaque",
     },
     galleryFilter: "all",
   },

@@ -22,6 +22,7 @@
  *   npm run assets
  */
 
+import { existsSync } from "node:fs";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
@@ -63,14 +64,13 @@ const SELECTION = [
     cy: 0.42,
   },
   {
-    // The wider shot of the same cake, which is the one with room either side.
-    from: 21,
-    name: "hero-lakeside-wide",
-    about: "The same cake framed landscape for desktop, roses and daylight either side",
-    aspect: 16 / 9,
-    scale: 1,
-    cx: 0.5,
-    cy: 0.26,
+    from: 26,
+    name: "hero-plum-gold",
+    about: "Plum and ivory three-tier cake, framed loosely so none of it is lost",
+    aspect: 4 / 5,
+    scale: 0.95,
+    cx: 0.55,
+    cy: 0.4,
   },
   {
     from: 19,
@@ -271,8 +271,54 @@ function cropRect(width, height, { aspect, scale, cx, cy }) {
   };
 }
 
+/**
+ * The wordmark used in the header.
+ *
+ * The supplied logo is the EC monogram sitting above the words ELSHADAI CAKE
+ * CREATIONS. Only the monogram is taken, for two reasons: the header already
+ * sets the business name in type beside it, so the full lockup would print the
+ * name twice, and the ELSHADAI line in the artwork is near-black — invisible
+ * against the transparent header while it sits over the hero.
+ *
+ * Written straight to public/ rather than through `npm run assets`, because
+ * that pipeline flattens to JPEG and the monogram needs its transparency.
+ */
+async function buildMonogram() {
+  const source = path.join(SOURCE, "Logo.png");
+  if (!existsSync(source)) {
+    console.log("  no Logo.png found — skipping the monogram");
+    return;
+  }
+
+  const outDir = path.join(ROOT, "public", "brand");
+  await mkdir(outDir, { recursive: true });
+
+  // The upper band of the artwork holds the monogram. Cropping and trimming
+  // are separate passes: sharp applies trim before extract within one pipeline,
+  // which would make the extract window refer to an image that no longer exists.
+  const band = await sharp(source)
+    .extract({ left: 0, top: 60, width: 1536, height: 560 })
+    .png()
+    .toBuffer();
+
+  const trimmed = await sharp(band).trim({ threshold: 1 }).png().toBuffer();
+
+  // Rendered around 30px tall, so 256 covers well past three times that.
+  await sharp(trimmed)
+    .resize({ height: 256, withoutEnlargement: true })
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(outDir, "monogram.png"));
+
+  const { width, height } = await sharp(
+    path.join(outDir, "monogram.png"),
+  ).metadata();
+  console.log(`  Logo.png  ->  /brand/monogram.png  (${width}x${height})`);
+}
+
 async function main() {
   await mkdir(OUT, { recursive: true });
+
+  await buildMonogram();
 
   const files = (await readdir(SOURCE))
     .filter((file) => /\.jpe?g$/i.test(file))

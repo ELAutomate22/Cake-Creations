@@ -61,17 +61,6 @@
     "blurDataURL": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAADwAwCdASoUABkAPxF6t1OsJ6WiqAqpgCIJQBdmZfgluaW0ZVs4c3hwAPhCJ0D1Tp5y34ktSpow+grBTHd4CoUj5e5E+LxuCsdbh+X7FhUTdQF/FUN0G1BaQ8hV/Jar9rMAAAAA",
     "path": "/cakes/gold-script-birthday"
   },
-  "hero-lakeside-wide": {
-    "name": "hero-lakeside-wide",
-    "width": 1126,
-    "height": 633,
-    "widths": [
-      640,
-      1080
-    ],
-    "blurDataURL": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADQAwCdASoUAAsAPxF2sVCsJySisAgBgCIJYwCdABmVFL/wJWQjIAAAzS6PrB/DoHe9QAOBZaKcieQcsqXY560HiUTRCY7FAAA=",
-    "path": "/media/hero-lakeside-wide"
-  },
   "hero-lakeside": {
     "name": "hero-lakeside",
     "width": 1126,
@@ -82,6 +71,17 @@
     ],
     "blurDataURL": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAADwBACdASoUABkAPxFurlGsJaQisBgMAYAiCWUAxNgQLXB3kQyap/AhxddWTBQoaAAA/sP+5DSS9etzwiaMJGEpqYhnRZDYpzc6kEQ7Cs79vBmf73VW17FBM+j58GpIfRlzrdcAAAA=",
     "path": "/media/hero-lakeside"
+  },
+  "hero-plum-gold": {
+    "name": "hero-plum-gold",
+    "width": 1459,
+    "height": 1824,
+    "widths": [
+      640,
+      1080
+    ],
+    "blurDataURL": "data:image/webp;base64,UklGRnwAAABXRUJQVlA4IHAAAAAwBACdASoUABkAPv1sqVArJiQit/qoAWAfiWoArDLs+kgNdvgvPXTH1mAA+eR2X8ocQCnfh2JObQHBBEuDhmhRYPVoA1K/fj4IrHP0c5IF0VIwKkby/5QPGE9DSS7Wl7AtjfnSf2fdUrsJGFHPfwAA",
+    "path": "/media/hero-plum-gold"
   },
   "ivory-rose-birthday": {
     "name": "ivory-rose-birthday",

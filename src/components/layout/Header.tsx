@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -107,22 +108,43 @@ export function Header() {
         {/* ── Wordmark ─────────────────────────────────────────────────── */}
         <Link
           href="/"
-          className="group flex min-w-0 items-baseline gap-2"
+          className="group flex min-w-0 items-center gap-2.5 sm:gap-3"
           aria-label={`${business.name} — home`}
         >
-          <span
-            className={`truncate font-serif text-lg leading-none tracking-tight transition-colors sm:text-xl lg:text-[1.375rem] ${
-              solid ? "text-espresso" : "text-ivory"
-            }`}
-          >
-            Elshadai
-          </span>
-          <span
-            className={`hidden truncate text-[0.625rem] uppercase tracking-[0.24em] transition-colors sm:inline ${
-              solid ? "text-cocoa-soft" : "text-ivory/70"
-            }`}
-          >
-            Cake Creations
+          {/*
+            The monogram only. The name is set in type beside it, so the full
+            lockup would print the business name twice over.
+
+            Gold reads against both header states, so it needs no colour
+            treatment — unlike the text, which switches with `solid`.
+          */}
+          <Image
+            src="/brand/monogram.png"
+            alt=""
+            aria-hidden="true"
+            width={258}
+            height={256}
+            priority
+            className="h-7 w-auto shrink-0 sm:h-8 lg:h-9"
+          />
+
+          {/* The two words keep their own baseline against each other, while
+              the monogram is centred against the pair. */}
+          <span className="flex min-w-0 items-baseline gap-2">
+            <span
+              className={`truncate font-serif text-lg leading-none tracking-tight transition-colors sm:text-xl lg:text-[1.375rem] ${
+                solid ? "text-espresso" : "text-ivory"
+              }`}
+            >
+              Elshadai
+            </span>
+            <span
+              className={`hidden truncate text-[0.625rem] uppercase tracking-[0.24em] transition-colors sm:inline ${
+                solid ? "text-cocoa-soft" : "text-ivory/70"
+              }`}
+            >
+              Cake Creations
+            </span>
           </span>
         </Link>
 

@@ -374,6 +374,53 @@ h4 {
   object-fit: cover;
 }
 
+/* ── Hero blend ────────────────────────────────────────────────────────────
+   The hero photograph stands in a band down the middle rather than filling the
+   screen, so its two vertical edges are hard lines against the background.
+
+   A mask fades those edges out instead, letting the photograph dissolve into
+   whatever colour sits either side of it. Masking rather than laying gradient
+   panels over the top means it works no matter what is behind — a colour, a
+   texture, or a photograph further back. */
+
+.hero-blend {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 18%,
+    #000 82%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 18%,
+    #000 82%,
+    transparent 100%
+  );
+}
+
+/* Narrow screens hold the photograph nearly edge to edge, so the same
+   percentages would eat into the cake itself. The fade is pulled in tight. */
+@media (max-width: 639px) {
+  .hero-blend {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      #000 9%,
+      #000 91%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      #000 9%,
+      #000 91%,
+      transparent 100%
+    );
+  }
+}
+
 /* ── Repetition hover ──────────────────────────────────────────────────────
    Stacked copies of one photograph. They sit exactly on top of each other and
    are moved only with transforms, so the effect runs on the compositor and
