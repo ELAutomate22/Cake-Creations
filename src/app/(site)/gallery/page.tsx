@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { business, gallery } from "@/content/site";
 import { GalleryGrid } from "@/components/gallery/GalleryGrid";
+
+/**
+ * Read on the server so the cakes are in the HTML.
+ *
+ * The grid used to take the filter from `useSearchParams`, which is a client
+ * hook. A client component reading search params forces the Suspense boundary
+ * around it to bail out of prerendering, so the page shipped with the heading
+ * and an empty shell, and every cake appeared only once JavaScript had run.
+ * That is the wrong trade for the page the whole business is judged on: it is
+ * blank without JavaScript, and a crawler only sees the cakes on a second,
+ * slower pass.
+ *
+ * Taking the filter from the page's own `searchParams` instead means the
+ * server renders the right set of cakes straight away. It costs the static
+ * prerender — this route is now rendered per request — which is a fair price
+ * for the gallery arriving complete.
+ */
 
 export const metadata: Metadata = {
   title: "Gallery",
@@ -15,7 +31,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function GalleryPage() {
+export default async function GalleryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string | string[] }>;
+}) {
+  const { filter } = await searchParams;
+  // A repeated query parameter arrives as an array; only one filter applies.
+  const requested = Array.isArray(filter) ? filter[0] : filter;
+
   return (
     <>
       <header className="bg-ivory pt-40 pb-14 sm:pt-44">
@@ -28,10 +52,7 @@ export default function GalleryPage() {
         </div>
       </header>
 
-      {/* useSearchParams needs a boundary so the shell can still prerender. */}
-      <Suspense fallback={<div className="shell pb-28" />}>
-        <GalleryGrid />
-      </Suspense>
+      <GalleryGrid initialFilter={requested} />
     </>
   );
 }

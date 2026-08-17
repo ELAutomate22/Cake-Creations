@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { useGSAP } from "@gsap/react";
 import { gallery, occasions, type GalleryCake } from "@/content/site";
 import { CakeImage } from "@/components/ui/CakeImage";
@@ -17,6 +16,11 @@ import { createScrollReveals, isTouch } from "@/lib/motion";
  *
  * Filters are built from the cakes that actually exist — a category with no
  * photographs in it is never offered, so no filter can lead to an empty page.
+ *
+ * The filter from the address bar is handed in by the page rather than read
+ * here with `useSearchParams`. Reading it here would make this component the
+ * reason the whole gallery could not be rendered on the server, and the cakes
+ * would reach the visitor only after JavaScript had run.
  */
 
 const SIZE_CLASSES: Record<GalleryCake["size"], string> = {
@@ -26,8 +30,12 @@ const SIZE_CLASSES: Record<GalleryCake["size"], string> = {
   feature: "sm:col-span-2 lg:col-span-2 lg:row-span-2 aspect-[4/5]",
 };
 
-export function GalleryGrid() {
-  const searchParams = useSearchParams();
+export type GalleryGridProps = {
+  /** The `?filter=` value from the address bar, read on the server. */
+  initialFilter?: string;
+};
+
+export function GalleryGrid({ initialFilter }: GalleryGridProps) {
   const scopeRef = useRef<HTMLDivElement>(null);
 
   const cakes = gallery.cakes;
@@ -61,11 +69,13 @@ export function GalleryGrid() {
     return available;
   }, [cakes]);
 
-  // A link from the Home carousel can preselect a filter. Derived during
-  // render rather than copied into state by an effect.
-  const requested = searchParams.get("filter");
+  // A link from the Home carousel can preselect a filter. Checked against the
+  // filters that exist, so a hand-typed or stale value falls back to all cakes
+  // rather than showing an empty grid.
   const fromUrl =
-    requested && filters.some((item) => item.id === requested) ? requested : null;
+    initialFilter && filters.some((item) => item.id === initialFilter)
+      ? initialFilter
+      : null;
 
   const filter = chosenFilter ?? fromUrl ?? "all";
 
