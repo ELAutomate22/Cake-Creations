@@ -101,9 +101,30 @@ export const brandStatements: string[] = [
    that row. Nothing breaks, and nothing is invented.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * A number to call, and optionally whose it is.
+ *
+ * `label` is what tells a visitor who they are ringing when there is more than
+ * one number. Leave it as its placeholder and the number is still shown, just
+ * without a name against it.
+ */
+export type PhoneNumber = { number: string; label: string };
+
 export const contact = {
   person: "[CONTACT PERSON]",
-  phone: "[PHONE NUMBER]",
+
+  /**
+   * Numbers people can call. Add or remove entries freely.
+   *
+   * Write each one the way it should be read on the page, spaces and all —
+   * the link that actually dials strips everything but the digits, so the
+   * display format is yours to choose.
+   */
+  phones: [
+    { number: "+44 7534 634714", label: "[NAME FOR THIS NUMBER]" },
+    { number: "+44 7773 556005", label: "[NAME FOR THIS NUMBER]" },
+  ] as PhoneNumber[],
+
   email: "[EMAIL ADDRESS]",
   whatsapp: "[WHATSAPP NUMBER]",
   location: "[BUSINESS LOCATION]",
@@ -134,7 +155,8 @@ export function isProvided(value: string | undefined | null): boolean {
 
 /** Contact details that have actually been supplied. */
 export const resolved = {
-  hasPhone: isProvided(contact.phone),
+  /** Only the numbers that have actually been filled in. */
+  phones: contact.phones.filter((entry) => isProvided(entry.number)),
   hasEmail: isProvided(contact.email),
   hasWhatsapp: isProvided(contact.whatsapp),
   hasInstagram: isProvided(contact.social.instagram),

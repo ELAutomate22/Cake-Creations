@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { business, contact, isProvided } from "@/content/site";
+import { business, contact, isProvided, resolved } from "@/content/site";
 import "./globals.css";
 
 /**
@@ -127,7 +127,13 @@ function businessSchema() {
     ],
   };
 
-  if (isProvided(contact.phone)) schema.telephone = contact.phone;
+  // Schema.org takes one telephone or several; only collapse to a bare string
+  // when there is genuinely one, so a single number is not published as a list.
+  if (resolved.phones.length === 1) {
+    schema.telephone = resolved.phones[0].number;
+  } else if (resolved.phones.length > 1) {
+    schema.telephone = resolved.phones.map((entry) => entry.number);
+  }
   if (isProvided(contact.email)) schema.email = contact.email;
   if (isProvided(contact.location)) {
     schema.address = {

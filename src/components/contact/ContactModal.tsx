@@ -142,9 +142,19 @@ export function ContactModal({
       <Row key="person" icon={<Icon name="social" />} label="Contact" value={contact.person} index={index++} />,
     );
   }
-  if (resolved.hasPhone) {
+  // One row per number. Where a name has been given for a number it becomes
+  // the row's label, so a visitor with two numbers in front of them knows
+  // which of the two they are ringing.
+  for (const entry of resolved.phones) {
     rows.push(
-      <Row key="phone" icon={<Icon name="phone" />} label="Telephone" value={contact.phone} href={telHref(contact.phone)} index={index++} />,
+      <Row
+        key={entry.number}
+        icon={<Icon name="phone" />}
+        label={isProvided(entry.label) ? entry.label : "Telephone"}
+        value={entry.number}
+        href={telHref(entry.number)}
+        index={index++}
+      />,
     );
   }
   if (resolved.hasEmail) {

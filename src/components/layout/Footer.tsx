@@ -117,16 +117,19 @@ export function Footer() {
           <div>
             <h2 className="eyebrow text-ivory/50">Get in touch</h2>
             <ul className="mt-6 space-y-3 text-sm text-ivory/80">
-              {resolved.hasPhone && (
-                <li>
+              {resolved.phones.map((entry) => (
+                <li key={entry.number}>
                   <a
-                    href={telHref(contact.phone)}
+                    href={telHref(entry.number)}
                     className="transition-colors hover:text-ivory"
                   >
-                    {contact.phone}
+                    {entry.number}
                   </a>
+                  {isProvided(entry.label) && (
+                    <span className="ml-2 text-ivory/50">{entry.label}</span>
+                  )}
                 </li>
-              )}
+              ))}
               {resolved.hasEmail && (
                 <li>
                   <a
@@ -140,7 +143,7 @@ export function Footer() {
               {isProvided(contact.location) && <li>{contact.location}</li>}
 
               {/* Nothing real to show yet — say so rather than invent it. */}
-              {!resolved.hasPhone &&
+              {resolved.phones.length === 0 &&
                 !resolved.hasEmail &&
                 !isProvided(contact.location) && (
                   <li className="text-ivory/45">
