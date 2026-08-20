@@ -25,7 +25,7 @@ const FOCUSABLE = "a[href], button:not([disabled])";
 export function Header() {
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const { openContact } = useSiteUI();
+  const { openContact, openReview } = useSiteUI();
 
   // Read straight from the browser rather than mirrored into state, so the
   // header is already correct on a reload halfway down the page.
@@ -179,6 +179,23 @@ export function Header() {
             );
           })}
 
+          {/*
+            Reviews opens the dialog rather than scrolling to the section on
+            the Home page. The header is on every page, and a link that only
+            works on one of them is a link that looks broken on the others.
+          */}
+          <button
+            type="button"
+            onClick={openReview}
+            className={`py-1 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
+              solid
+                ? "text-cocoa-soft hover:text-espresso"
+                : "text-ivory/75 hover:text-ivory"
+            }`}
+          >
+            Reviews
+          </button>
+
           <button
             type="button"
             onClick={openContact}
@@ -257,7 +274,7 @@ export function Header() {
                 type="button"
                 onClick={() => {
                   closeMenu();
-                  openContact();
+                  openReview();
                 }}
                 className="display block py-3 text-left text-espresso"
                 style={
@@ -265,6 +282,27 @@ export function Header() {
                     ? {
                         animation: `rise 520ms var(--ease-silk) ${
                           80 + navigation.length * 70
+                        }ms both`,
+                      }
+                    : undefined
+                }
+              >
+                Reviews
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  openContact();
+                }}
+                className="display block py-3 text-left text-espresso"
+                style={
+                  menuOpen
+                    ? {
+                        animation: `rise 520ms var(--ease-silk) ${
+                          80 + (navigation.length + 1) * 70
                         }ms both`,
                       }
                     : undefined
