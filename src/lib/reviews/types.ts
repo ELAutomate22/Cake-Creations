@@ -4,7 +4,7 @@
  * There is only one, and it has no email address on it. Nothing on the website
  * reads that column, so it is impossible to hand a component a review that
  * carries one. The address is stored, and readable by the business through the
- * Supabase dashboard, but it never travels to a browser.
+ * Cloudflare dashboard, but it never travels to a browser.
  */
 
 export type PublicReview = {

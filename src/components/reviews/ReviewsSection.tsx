@@ -3,12 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { reviews as copy } from "@/content/site";
-import { getSupabaseClient, isDatabaseConfigured } from "@/lib/supabase/client";
 import {
   summarise,
-  toPublicReview,
   type PublicReview,
-  type ReviewRow,
   type ReviewSummary,
 } from "@/lib/reviews/types";
 import { CAKE_STYLE_LABELS, type CakeStyleChoice } from "@/lib/reviews/schema";
@@ -19,9 +16,10 @@ import { useSiteUI } from "@/components/layout/SiteChrome";
 /**
  * Customer reviews.
  *
- * Reads straight from the database in the browser, using the public key. Row
- * level security is what keeps this honest: the query cannot ask for an email
- * address, because the anonymous role has no privilege on that column.
+ * Reads through the website's own /api/reviews endpoint rather than talking to
+ * the database. D1 has no public key to give a browser and no row level
+ * security to fall back on, so the server is what decides which columns leave
+ * it — a customer's email address has no way to reach this component.
  *
  * The average and the count roll up from zero as the section arrives. That is
  * decoration only — the accessible text always states the real figures, and it
@@ -34,56 +32,51 @@ export function ReviewsSection() {
   const { openReview, reviewsVersion } = useSiteUI();
   const rootRef = useRef<HTMLElement>(null);
 
-  // Whether a database exists at all is a build-time fact, so it is derived
-  // during render rather than discovered by an effect.
-  const configured = isDatabaseConfigured();
-
   const [items, setItems] = useState<PublicReview[]>([]);
   const [summary, setSummary] = useState<ReviewSummary>({ count: 0, average: 0 });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [fetchState, setFetchState] = useState<"loading" | "ready" | "error">(
-    "loading",
-  );
-
-  const state = configured ? fetchState : "unconfigured";
+  const [state, setState] = useState<
+    "loading" | "ready" | "error" | "unconfigured"
+  >("loading");
 
   useEffect(() => {
-    if (!configured) return;
-
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-
     // Guards against an earlier request resolving after a later one and
     // overwriting fresher reviews.
     let cancelled = false;
 
     void (async () => {
-      const { data, error } = await supabase
-        .from("cake_reviews")
-        // Note what is absent: customer_email is never requested.
-        .select(
-          "id, customer_name, cake_type, cake_style, occasion, rating, review_text, created_at, owner_response",
-        )
-        .order("created_at", { ascending: false });
+      try {
+        const response = await fetch("/api/reviews", { cache: "no-store" });
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      if (error) {
-        console.error("Reviews could not be loaded:", error.message);
-        setFetchState("error");
-        return;
+        // 503 is the endpoint saying there is no database yet, which is a
+        // different thing from a database that failed, and reads differently
+        // on the page.
+        if (response.status === 503) {
+          setState("unconfigured");
+          return;
+        }
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const body = (await response.json()) as { reviews: PublicReview[] };
+        if (cancelled) return;
+
+        setItems(body.reviews);
+        setSummary(summarise(body.reviews));
+        setState("ready");
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Reviews could not be loaded:", error);
+        setState("error");
       }
-
-      const mapped = (data as ReviewRow[]).map(toPublicReview);
-      setItems(mapped);
-      setSummary(summarise(mapped));
-      setFetchState("ready");
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [configured, reviewsVersion]);
+  }, [reviewsVersion]);
 
   // The count-up. Purely visual; the real numbers are in the sr-only text.
   useGSAP(
@@ -148,9 +141,10 @@ export function ReviewsSection() {
 
           {state === "unconfigured" && (
             <p className="voice measure-wide text-cocoa-soft">
-              Reviews are not connected to a database yet. Once Supabase details
-              are added to <code className="text-espresso">.env.local</code>,
-              customer reviews will appear here automatically.
+              Reviews are not connected to a database yet. Once the Cloudflare
+              D1 details are added to{" "}
+              <code className="text-espresso">.env.local</code>, customer
+              reviews will appear here automatically.
             </p>
           )}
 

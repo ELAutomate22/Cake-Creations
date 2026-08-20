@@ -6,7 +6,7 @@ import {
   publicName,
   sanitiseText,
 } from "@/lib/reviews/sanitise";
-import { createPublicClient, isDatabaseConfigured } from "@/lib/supabase/server";
+import { isDatabaseConfigured, query } from "@/lib/d1/client";
 import { toPublicReview, type ReviewRow } from "@/lib/reviews/types";
 
 /**
@@ -19,6 +19,12 @@ import { toPublicReview, type ReviewRow } from "@/lib/reviews/types";
  *
  * The checks, in order:
  *
+ * GET serves the published reviews. It exists because D1 has no public key to
+ * hand a browser — reads that used to happen in the page now happen here, and
+ * the columns are named explicitly so an email address cannot leave the server.
+ *
+ * The checks on a submission, in order:
+ *
  *   1. the honeypot field, which only an automated filler would populate
  *   2. full schema validation, including the no-links rule
  *   3. rate limiting, against a salted hash of the submitter's address
@@ -28,6 +34,16 @@ import { toPublicReview, type ReviewRow } from "@/lib/reviews/types";
 
 export const runtime = "nodejs";
 
+/**
+ * The columns a browser may see.
+ *
+ * Written out rather than `SELECT *`. Postgres used to refuse the public role
+ * the email column outright; SQLite has no such privilege, so this list is now
+ * the only thing standing between a customer's address and the page.
+ */
+const PUBLIC_COLUMNS =
+  "id, customer_name, cake_type, cake_style, occasion, rating, review_text, created_at, owner_response";
+
 /** How many reviews one submitter may post, and over what window. */
 const RATE_LIMIT = { max: 3, windowHours: 24 };
 
@@ -36,6 +52,32 @@ const DUPLICATE_WINDOW_HOURS = 24;
 
 function problem(message: string, status: number, field?: string) {
   return NextResponse.json({ ok: false, message, field }, { status });
+}
+
+export async function GET() {
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ ok: false, reviews: [] }, { status: 503 });
+  }
+
+  try {
+    const { rows } = await query<ReviewRow>(
+      `SELECT ${PUBLIC_COLUMNS} FROM cake_reviews
+        WHERE is_visible = 1
+        ORDER BY created_at DESC`,
+    );
+
+    return NextResponse.json(
+      { ok: true, reviews: rows.map(toPublicReview) },
+      // Reviews appear the moment they are left, so nothing may cache this.
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    console.error("Reviews could not be read:", error);
+    return NextResponse.json(
+      { ok: false, message: "Reviews could not be loaded." },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: Request) {
@@ -74,7 +116,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, review: null });
   }
 
-  const supabase = createPublicClient();
   const submitter = fingerprint(clientIp(request.headers), salt);
 
   // ── 3. Rate limiting ─────────────────────────────────────────────────────
@@ -82,76 +123,75 @@ export async function POST(request: Request) {
     Date.now() - RATE_LIMIT.windowHours * 60 * 60 * 1000,
   ).toISOString();
 
-  const { count, error: countError } = await supabase
-    .from("cake_reviews")
-    .select("id", { count: "exact", head: true })
-    .eq("submitter_hash", submitter)
-    .gte("created_at", since);
-
-  if (countError) {
-    console.error("Rate limit check failed:", countError.message);
-    return problem("Your review could not be saved. Please try again.", 500);
-  }
-
-  if ((count ?? 0) >= RATE_LIMIT.max) {
-    return problem(
-      "You have already left several reviews recently. Thank you — please try again tomorrow.",
-      429,
-    );
-  }
-
-  // ── 4. Duplicate detection ───────────────────────────────────────────────
   const cleanedText = sanitiseText(submission.reviewText);
   const duplicateSince = new Date(
     Date.now() - DUPLICATE_WINDOW_HOURS * 60 * 60 * 1000,
   ).toISOString();
 
-  const { data: existing, error: duplicateError } = await supabase
-    .from("cake_reviews")
-    .select("id")
-    .eq("submitter_hash", submitter)
-    .eq("review_text", cleanedText)
-    .gte("created_at", duplicateSince)
-    .limit(1);
+  const id = crypto.randomUUID();
+  // Stored as an ISO-8601 UTC string so that ordering by text is ordering by
+  // time — the whole reason the column is TEXT rather than a number.
+  const createdAt = new Date().toISOString();
 
-  if (duplicateError) {
-    console.error("Duplicate check failed:", duplicateError.message);
-    return problem("Your review could not be saved. Please try again.", 500);
-  }
+  let stored: ReviewRow;
 
-  if (existing && existing.length > 0) {
-    return problem("That review has already been posted. Thank you.", 409);
-  }
+  try {
+    const { rows: recent } = await query<{ count: number }>(
+      `SELECT COUNT(*) AS count FROM cake_reviews
+        WHERE submitter_hash = ? AND created_at >= ?`,
+      [submitter, since],
+    );
 
-  // ── 5. Clean, then store ─────────────────────────────────────────────────
-  const row = {
-    customer_name: publicName(submission.name),
-    customer_email: submission.email,
-    cake_type: submission.cakeType ? sanitiseText(submission.cakeType) : null,
-    cake_style: submission.cakeStyle,
-    occasion: submission.occasion ? sanitiseText(submission.occasion) : null,
-    rating: submission.rating,
-    review_text: cleanedText,
-    submitter_hash: submitter,
-    is_visible: true,
-  };
+    if ((recent[0]?.count ?? 0) >= RATE_LIMIT.max) {
+      return problem(
+        "You have already left several reviews recently. Thank you — please try again tomorrow.",
+        429,
+      );
+    }
 
-  const { data, error } = await supabase
-    .from("cake_reviews")
-    .insert(row)
-    .select(
-      "id, customer_name, cake_type, cake_style, occasion, rating, review_text, created_at, owner_response",
-    )
-    .single();
+    // ── 4. Duplicate detection ─────────────────────────────────────────────
+    const { rows: existing } = await query<{ id: string }>(
+      `SELECT id FROM cake_reviews
+        WHERE submitter_hash = ? AND review_text = ? AND created_at >= ?
+        LIMIT 1`,
+      [submitter, cleanedText, duplicateSince],
+    );
 
-  if (error) {
-    console.error("Review insert failed:", error.message);
+    if (existing.length > 0) {
+      return problem("That review has already been posted. Thank you.", 409);
+    }
+
+    // ── 5. Clean, then store ───────────────────────────────────────────────
+    const { rows: inserted } = await query<ReviewRow>(
+      `INSERT INTO cake_reviews (
+          id, customer_name, customer_email, cake_type, cake_style,
+          occasion, rating, review_text, submitter_hash, is_visible, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+        RETURNING ${PUBLIC_COLUMNS}`,
+      [
+        id,
+        publicName(submission.name),
+        submission.email,
+        submission.cakeType ? sanitiseText(submission.cakeType) : null,
+        submission.cakeStyle,
+        submission.occasion ? sanitiseText(submission.occasion) : null,
+        submission.rating,
+        cleanedText,
+        submitter,
+        createdAt,
+      ],
+    );
+
+    if (inserted.length === 0) {
+      throw new Error("the insert returned no row");
+    }
+
+    stored = inserted[0];
+  } catch (error) {
+    console.error("Review could not be saved:", error);
     return problem("Your review could not be saved. Please try again.", 500);
   }
 
   // The response deliberately carries no email address.
-  return NextResponse.json({
-    ok: true,
-    review: toPublicReview(data as ReviewRow),
-  });
+  return NextResponse.json({ ok: true, review: toPublicReview(stored) });
 }
