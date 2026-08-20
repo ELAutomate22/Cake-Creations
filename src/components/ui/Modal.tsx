@@ -104,20 +104,38 @@ export function Modal({
     openCount += 1;
     document.documentElement.classList.add("dialog-open");
 
-    // Two frames: one for the portal to commit, one for the opening transition
-    // to have a starting state to move away from.
-    const raf = requestAnimationFrame(() => {
+    /*
+     * Reveal the panel one frame after the portal commits, so the opening
+     * transition has a starting state to move away from.
+     *
+     * A timer runs the same reveal as a fallback. Everything the dialog is —
+     * visible, and holding focus — hangs off this one call, so if the frame
+     * never arrives the dialog is open but invisible and unfocusable, with the
+     * page behind it locked. An animation frame is not guaranteed: browsers
+     * withhold it from pages that are not being painted. A dialog is not
+     * something to gamble on a frame.
+     */
+    let revealed = false;
+    const reveal = () => {
+      if (revealed) return;
+      revealed = true;
+
       setVisible(true);
+
       const panel = panelRef.current;
       if (!panel) return;
       const first = panel.querySelector<HTMLElement>(FOCUSABLE);
       (first ?? panel).focus({ preventScroll: true });
-    });
+    };
+
+    const raf = requestAnimationFrame(reveal);
+    const fallback = setTimeout(reveal, 80);
 
     document.addEventListener("keydown", onKeyDown);
 
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(fallback);
       document.removeEventListener("keydown", onKeyDown);
 
       openCount = Math.max(0, openCount - 1);
@@ -150,7 +168,9 @@ export function Modal({
       />
 
       <div
-        className={`fixed inset-0 flex justify-center overflow-y-auto p-4 sm:p-6 ${
+        // Explicitly above the backdrop, so the ordering is stated rather than
+        // left to depend on which element happens to come later in the markup.
+        className={`fixed inset-0 z-10 flex justify-center overflow-y-auto p-4 sm:p-6 ${
           align === "center" ? "items-center" : "items-stretch"
         }`}
         onClick={(event) => {

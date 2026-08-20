@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Modal } from "@/components/ui/Modal";
 import {
   business,
@@ -203,9 +204,24 @@ export function ContactModal({
     <Modal open={open} onClose={onClose} label="Contact Elshadai Cake Creations">
       <div className="p-7 sm:p-10">
         <div className="flex items-start justify-between gap-6">
-          <div>
-            <p className="eyebrow text-cocoa-soft">Get in touch</p>
-            <h2 className="display-sm mt-3 text-espresso">{business.name}</h2>
+          <div className="flex items-center gap-4 sm:gap-5">
+            {/*
+              The monogram, not the full lockup. The artwork sets the business
+              name underneath the mark, and the name is set in type right here
+              — the two together would print it twice.
+            */}
+            <Image
+              src="/brand/monogram.png"
+              alt=""
+              aria-hidden="true"
+              width={258}
+              height={256}
+              className="h-12 w-auto shrink-0 sm:h-14"
+            />
+            <div>
+              <p className="eyebrow text-cocoa-soft">Get in touch</p>
+              <h2 className="display-sm mt-2 text-espresso">{business.name}</h2>
+            </div>
           </div>
           <button
             type="button"
@@ -219,8 +235,12 @@ export function ContactModal({
           </button>
         </div>
 
+        {isProvided(contact.message) && (
+          <p className="voice measure mt-7 text-cocoa">{contact.message}</p>
+        )}
+
         {rows.length > 0 ? (
-          <ul className="mt-9 space-y-4">{rows}</ul>
+          <ul className="mt-8 space-y-4">{rows}</ul>
         ) : (
           <p className="voice measure mt-8 text-cocoa">
             Contact details have not been added to the website yet. They will

@@ -114,6 +114,16 @@ export const contact = {
   person: "[CONTACT PERSON]",
 
   /**
+   * The welcome line at the top of the Contact dialog.
+   *
+   * Keep it to what is true of how the business works. It is the first thing
+   * read after the name, so it should invite a call rather than promise
+   * anything about prices, timings or availability.
+   */
+  message:
+    "Every cake begins with a conversation — the occasion, the person, and the date it is needed. A call is the quickest way to start one.",
+
+  /**
    * Numbers people can call. Add or remove entries freely.
    *
    * Write each one the way it should be read on the page, spaces and all —
