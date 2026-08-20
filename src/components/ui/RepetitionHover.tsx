@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/motion";
 import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
@@ -23,11 +23,16 @@ import { useMediaQuery, useReducedMotion } from "@/hooks/useMediaQuery";
  * responsive sizes the asset pipeline exists to produce. All the copies share
  * one `src`, so the browser makes a single request and reuses one decode.
  *
- * The extra copies are only created where a pointer can actually hover. On a
- * phone they would be dead weight — invisible, unreachable, and paid for in
- * memory on the device least able to spare it — so touchscreens render the one
- * photograph and nothing else. That also keeps the server HTML to a single
- * image, which is what the crawler and the largest-contentful paint want.
+ * A touchscreen has no hover, so it gets the same effect on a different
+ * trigger: each photograph plays it once as it scrolls into view. The timeline
+ * begins and ends on the plain photograph, which is what makes this work as a
+ * reveal as well as a hover.
+ *
+ * On touch the copies are also built and thrown away around that one play,
+ * rather than sitting in the page for the whole visit. A gallery of seventeen
+ * photographs would otherwise carry sixty-eight image elements on the device
+ * least able to spare the memory. Either way the server HTML holds one image,
+ * which is what the crawler and the largest-contentful paint want.
  */
 
 export type RepetitionHoverProps = {
@@ -75,13 +80,49 @@ export function RepetitionHover({
   const canHover = useMediaQuery("(hover: hover) and (pointer: fine)");
   const reducedMotion = useReducedMotion();
 
-  const active = canHover && !reducedMotion;
+  // Hover drives it where there is a pointer; scrolling drives it where there
+  // is not. Reduced motion means neither.
+  const hoverDriven = canHover && !reducedMotion;
+  const scrollDriven = !canHover && !reducedMotion;
+
+  // On touch the copies exist only for the length of one play.
+  const [phase, setPhase] = useState<"idle" | "playing" | "done">("idle");
+
+  const active = hoverDriven || (scrollDriven && phase === "playing");
 
   // The copies stacked above the base one.
   const echoes = useMemo(
     () => Array.from({ length: active ? Math.max(2, repetitions) - 1 : 0 }),
     [active, repetitions],
   );
+
+  /*
+   * Touch: arm the effect as the photograph comes into view.
+   *
+   * The observer is disconnected the moment it fires. This plays once per
+   * photograph — replaying it on every pass would turn a scroll back up the
+   * page into a screenful of cakes flickering.
+   */
+  useEffect(() => {
+    if (!scrollDriven || phase !== "idle") return;
+
+    const root = rootRef.current;
+    if (!root) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        setPhase("playing");
+      },
+      // A little inside the viewport, so the effect is not already over by the
+      // time the photograph is actually looked at.
+      { rootMargin: "0px 0px -15% 0px" },
+    );
+
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [scrollDriven, phase]);
 
   useGSAP(
     () => {
@@ -113,6 +154,21 @@ export function RepetitionHover({
           0,
         );
 
+      /*
+       * Touch: play it through once, then drop the copies.
+       *
+       * The timeline ends where it began, on the plain photograph, so there is
+       * nothing to reverse and nothing left looking mid-animation. Clearing the
+       * phase unmounts the copies a beat later, leaving the single image behind.
+       */
+      if (scrollDriven) {
+        timeline.eventCallback("onComplete", () => setPhase("done"));
+        timeline.play();
+        return () => {
+          timeline.kill();
+        };
+      }
+
       const play = () => timeline.play();
       const reverse = () => timeline.reverse();
 
@@ -142,7 +198,17 @@ export function RepetitionHover({
     },
     {
       scope: rootRef,
-      dependencies: [active, animate, duration, ease, initialScale, origin, stagger, echoes.length],
+      dependencies: [
+        active,
+        scrollDriven,
+        animate,
+        duration,
+        ease,
+        initialScale,
+        origin,
+        stagger,
+        echoes.length,
+      ],
       revertOnUpdate: true,
     },
   );

@@ -93,155 +93,171 @@ export function Header() {
   const solid = scrolled || !isHome || menuOpen;
 
   return (
-    <header
-      // Only colour is transitioned. backdrop-filter was in this list, which
-      // meant the blur was recomputed across the full header width on every
-      // frame of a 500ms transition, each time the scroll threshold was
-      // crossed — one of the most expensive things a browser can animate.
-      className={`fixed inset-x-0 top-0 z-[100] transition-[background-color,border-color] duration-500 ${
-        solid
-          ? "border-b border-espresso/10 bg-ivory/85 backdrop-blur-md"
-          : "on-dark border-b border-transparent"
-      }`}
-    >
-      <div className="shell flex h-[4.5rem] items-center justify-between gap-6 lg:h-20">
-        {/* ── Wordmark ─────────────────────────────────────────────────── */}
-        <Link
-          href="/"
-          className="group flex min-w-0 items-center gap-2.5 sm:gap-3"
-          aria-label={`${business.name} — home`}
-        >
-          {/*
+    <>
+      <header
+        // Only colour is transitioned. backdrop-filter was in this list, which
+        // meant the blur was recomputed across the full header width on every
+        // frame of a 500ms transition, each time the scroll threshold was
+        // crossed — one of the most expensive things a browser can animate.
+        className={`fixed inset-x-0 top-0 z-[100] transition-[background-color,border-color] duration-500 ${
+          solid
+            ? "border-b border-espresso/10 bg-ivory/85 backdrop-blur-md"
+            : "on-dark border-b border-transparent"
+        }`}
+      >
+        <div className="shell flex h-[4.5rem] items-center justify-between gap-6 lg:h-20">
+          {/* ── Wordmark ─────────────────────────────────────────────────── */}
+          <Link
+            href="/"
+            className="group flex min-w-0 items-center gap-2.5 sm:gap-3"
+            aria-label={`${business.name} — home`}
+          >
+            {/*
             The monogram only. The name is set in type beside it, so the full
             lockup would print the business name twice over.
 
             Gold reads against both header states, so it needs no colour
             treatment — unlike the text, which switches with `solid`.
           */}
-          <Image
-            src="/brand/monogram.png"
-            alt=""
-            aria-hidden="true"
-            width={258}
-            height={256}
-            priority
-            className="h-7 w-auto shrink-0 sm:h-8 lg:h-9"
-          />
+            <Image
+              src="/brand/monogram.png"
+              alt=""
+              aria-hidden="true"
+              width={258}
+              height={256}
+              priority
+              className="h-7 w-auto shrink-0 sm:h-8 lg:h-9"
+            />
 
-          {/* The two words keep their own baseline against each other, while
+            {/* The two words keep their own baseline against each other, while
               the monogram is centred against the pair. */}
-          <span className="flex min-w-0 items-baseline gap-2">
-            <span
-              className={`truncate font-serif text-lg leading-none tracking-tight transition-colors sm:text-xl lg:text-[1.375rem] ${
-                solid ? "text-espresso" : "text-ivory"
-              }`}
-            >
-              Elshadai
-            </span>
-            <span
-              className={`hidden truncate text-[0.625rem] uppercase tracking-[0.24em] transition-colors sm:inline ${
-                solid ? "text-cocoa-soft" : "text-ivory/70"
-              }`}
-            >
-              Cake Creations
-            </span>
-          </span>
-        </Link>
-
-        {/* ── Desktop navigation ───────────────────────────────────────── */}
-        <nav aria-label="Main" className="hidden items-center gap-9 md:flex">
-          {navigation.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={`relative py-1 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
-                  solid
-                    ? active
-                      ? "text-espresso"
-                      : "text-cocoa-soft hover:text-espresso"
-                    : active
-                      ? "text-ivory"
-                      : "text-ivory/75 hover:text-ivory"
+            <span className="flex min-w-0 items-baseline gap-2">
+              <span
+                className={`truncate font-serif text-lg leading-none tracking-tight transition-colors sm:text-xl lg:text-[1.375rem] ${
+                  solid ? "text-espresso" : "text-ivory"
                 }`}
               >
-                {item.label}
-                {/* The active page keeps a hairline beneath it. */}
-                <span
-                  aria-hidden="true"
-                  className={`absolute -bottom-0.5 left-0 h-px w-full origin-left bg-current transition-transform duration-500 ${
-                    active ? "scale-x-100" : "scale-x-0"
-                  }`}
-                />
-              </Link>
-            );
-          })}
+                Elshadai
+              </span>
+              <span
+                className={`hidden truncate text-[0.625rem] uppercase tracking-[0.24em] transition-colors sm:inline ${
+                  solid ? "text-cocoa-soft" : "text-ivory/70"
+                }`}
+              >
+                Cake Creations
+              </span>
+            </span>
+          </Link>
 
-          {/*
+          {/* ── Desktop navigation ───────────────────────────────────────── */}
+          <nav aria-label="Main" className="hidden items-center gap-9 md:flex">
+            {navigation.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`relative py-1 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
+                    solid
+                      ? active
+                        ? "text-espresso"
+                        : "text-cocoa-soft hover:text-espresso"
+                      : active
+                        ? "text-ivory"
+                        : "text-ivory/75 hover:text-ivory"
+                  }`}
+                >
+                  {item.label}
+                  {/* The active page keeps a hairline beneath it. */}
+                  <span
+                    aria-hidden="true"
+                    className={`absolute -bottom-0.5 left-0 h-px w-full origin-left bg-current transition-transform duration-500 ${
+                      active ? "scale-x-100" : "scale-x-0"
+                    }`}
+                  />
+                </Link>
+              );
+            })}
+
+            {/*
             Reviews opens the dialog rather than scrolling to the section on
             the Home page. The header is on every page, and a link that only
             works on one of them is a link that looks broken on the others.
           */}
+            <button
+              type="button"
+              onClick={openReview}
+              className={`py-1 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
+                solid
+                  ? "text-cocoa-soft hover:text-espresso"
+                  : "text-ivory/75 hover:text-ivory"
+              }`}
+            >
+              Reviews
+            </button>
+
+            <button
+              type="button"
+              onClick={openContact}
+              className={`border px-6 py-2.5 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
+                solid
+                  ? "border-espresso/30 text-espresso hover:bg-espresso hover:text-ivory"
+                  : "border-ivory/45 text-ivory hover:bg-ivory hover:text-espresso"
+              }`}
+            >
+              Contact
+            </button>
+          </nav>
+
+          {/* ── Mobile toggle ────────────────────────────────────────────── */}
           <button
+            ref={toggleRef}
             type="button"
-            onClick={openReview}
-            className={`py-1 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
-              solid
-                ? "text-cocoa-soft hover:text-espresso"
-                : "text-ivory/75 hover:text-ivory"
+            onClick={() => setMenu({ open: !menuOpen, path: pathname })}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            className={`-mr-2 flex h-11 w-11 items-center justify-center md:hidden ${
+              solid ? "text-espresso" : "text-ivory"
             }`}
           >
-            Reviews
+            <span className="sr-only">
+              {menuOpen ? "Close menu" : "Open menu"}
+            </span>
+            <span aria-hidden="true" className="relative block h-3 w-6">
+              <span
+                className={`absolute left-0 block h-px w-full bg-current transition-all duration-400 ${
+                  menuOpen ? "top-1.5 rotate-45" : "top-0"
+                }`}
+              />
+              <span
+                className={`absolute left-0 block h-px bg-current transition-all duration-400 ${
+                  menuOpen ? "top-1.5 w-full -rotate-45" : "top-3 w-2/3"
+                }`}
+              />
+            </span>
           </button>
+        </div>
+      </header>
 
-          <button
-            type="button"
-            onClick={openContact}
-            className={`border px-6 py-2.5 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
-              solid
-                ? "border-espresso/30 text-espresso hover:bg-espresso hover:text-ivory"
-                : "border-ivory/45 text-ivory hover:bg-ivory hover:text-espresso"
-            }`}
-          >
-            Contact
-          </button>
-        </nav>
+      {/*
+        ── Mobile panel ─────────────────────────────────────────────────
+        A sibling of the header rather than a child of it, and that is
+        load-bearing. The header carries `backdrop-blur`, and an element with a
+        backdrop-filter becomes the containing block for any fixed-position
+        descendant. Inside it, this panel's `bottom-0` resolved against the
+        72px-tall header instead of the viewport, so the panel was 375x0 — the
+        links spilled out of a box with no height, drawing straight over the
+        page with nothing behind them.
 
-        {/* ── Mobile toggle ────────────────────────────────────────────── */}
-        <button
-          ref={toggleRef}
-          type="button"
-          onClick={() => setMenu({ open: !menuOpen, path: pathname })}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-menu"
-          className={`-mr-2 flex h-11 w-11 items-center justify-center md:hidden ${
-            solid ? "text-espresso" : "text-ivory"
-          }`}
-        >
-          <span className="sr-only">{menuOpen ? "Close menu" : "Open menu"}</span>
-          <span aria-hidden="true" className="relative block h-3 w-6">
-            <span
-              className={`absolute left-0 block h-px w-full bg-current transition-all duration-400 ${
-                menuOpen ? "top-1.5 rotate-45" : "top-0"
-              }`}
-            />
-            <span
-              className={`absolute left-0 block h-px bg-current transition-all duration-400 ${
-                menuOpen ? "top-1.5 w-full -rotate-45" : "top-3 w-2/3"
-              }`}
-            />
-          </span>
-        </button>
-      </div>
-
-      {/* ── Mobile panel ───────────────────────────────────────────────── */}
+        Slightly translucent over a heavy blur rather than flat ivory, so the
+        page reads as softened behind the menu instead of simply gone.
+      */}
       <div
         id="mobile-menu"
         ref={panelRef}
         hidden={!menuOpen}
-        className="fixed inset-x-0 top-[4.5rem] bottom-0 bg-ivory md:hidden"
+        className="fixed inset-x-0 top-[4.5rem] bottom-0 z-[110] bg-ivory/95 backdrop-blur-2xl md:hidden"
       >
         <nav
           aria-label="Main"
@@ -325,6 +341,6 @@ export function Header() {
           </p>
         </nav>
       </div>
-    </header>
+    </>
   );
 }
