@@ -94,93 +94,117 @@ photographs in it is never offered and no filter can lead to an empty page.
 
 ---
 
-## 3. Connecting reviews
+## 3. Connecting the database
 
-Reviews need a Supabase database. Without one, everything else on the site
-works normally.
+Reviews and cake requests both live in **Cloudflare D1**. Reference photographs
+live in **Cloudflare R2**. Without them the rest of the site works normally —
+the reviews section says it is not connected, and the request form says
+photographs cannot be received.
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. Open **SQL Editor → New query**, paste the whole of `supabase/schema.sql`,
-   and run it
-3. Copy `.env.example` to `.env.local` and fill in the three values
-4. Restart the dev server
+1. Copy `.env.example` to `.env.local` and fill it in
+2. Apply the schema:
+
+   ```bash
+   npx wrangler d1 execute elshadai-cake-reviews --remote --file=db/d1/schema.sql
+   npx wrangler d1 execute elshadai-cake-reviews --remote --file=db/d1/migrations/0001_orders.sql
+   npx wrangler d1 execute elshadai-cake-reviews --remote --file=db/d1/migrations/0002_settings_seed.sql
+   ```
+
+3. Restart the dev server
 
 Nobody signs in on this website — there is no login and no admin area. Reviews
 are submitted by customers and appear immediately.
 
-All objects are prefixed `cake_` because this Supabase project is shared with
-another business.
+Everything is prefixed `cake_` or `order`, because this Cloudflare account is
+shared with another business. The cake site has its own D1 database and its own
+R2 bucket; nothing here touches the other one.
 
-### How reviews are kept safe
+### How submissions are kept safe
 
-Reviews publish **immediately** — there is no approval queue. That puts the
-whole burden on validation, so:
+Reviews publish **immediately** and cake requests are stored without review, so
+the whole burden falls on the server:
 
 - every submission is re-validated on the server, whatever the browser claimed
 - text is stripped of markup and control characters before it is stored
-- links are refused outright; genuine cake reviews essentially never contain one
+- links are refused in reviews; genuine cake reviews essentially never have one
 - a hidden field catches automated form-fillers
-- submissions are limited to three per person per day
+- reviews are limited to three per person per day, requests to five
 - the same review text cannot be posted twice
+- uploads are checked for type, extension, size and count, and then the first
+  bytes are read and compared against the format claimed, so a script renamed
+  to `.png` is refused
 
-The customer's email address is **never** shown publicly. That is enforced by
-the database itself, not by application code: the public role has no privilege
-on that column, so a query asking for it fails rather than returning data. A
-mistake in the website cannot leak it — verified by asking for it directly and
-getting `permission denied`.
+Customer email addresses are **never** sent to a browser. D1 has no row-level
+security and no column privileges, so unlike the Postgres setup this replaced,
+that guarantee now lives in application code: every read names the columns it
+wants, and `src/lib/d1/client.ts` is marked `server-only` so an import into a
+client component fails the build rather than shipping the API token.
 
-There is deliberately **no service-role key** in this project.
+The R2 bucket is private. Reference photographs are reachable only through
+short-lived signed links, one object at a time — verified by confirming that an
+unsigned request, a tampered signature and an anonymous bucket listing are all
+refused.
 
 ---
 
-## 4. Managing reviews
+## 4. Managing reviews and orders
 
-There is no admin area on the website. Reviews are managed directly in the
-Supabase dashboard, under **Table Editor → cake_reviews**, where you can see
-everything including the customer's email address.
+There is no admin area on the website yet. Both are managed from the
+**Cloudflare dashboard → D1 → elshadai-cake-reviews**, or from the command line:
 
-Three columns are worth knowing about:
+```bash
+npx wrangler d1 execute elshadai-cake-reviews --remote --command="SELECT * FROM orders"
+```
+
+Three review columns are worth knowing about:
 
 | Column | What it does |
 | --- | --- |
-| `is_visible` | Set to `false` to hide a review from the website without deleting it |
+| `is_visible` | Set to `0` to hide a review from the website without deleting it |
 | `owner_response` | Type a reply here and it appears beneath that review on the site |
-| `customer_email` | Private. Visible only here, never sent to a browser |
+| `customer_email` | Private. Never sent to a browser |
 
 The website already renders `owner_response` and already hides anything with
-`is_visible = false`, so both work the moment you edit the row — no code change
+`is_visible = 0`, so both work the moment you edit the row — no code change
 needed.
 
-If you later want a proper admin screen on the website, the database side is
-already prepared for it: `cake_admins` and the `is_cake_admin()` policies are
-in place, so it is a front-end job only.
+Cake requests arrive with status `new_request`. The quote, payment and message
+tables exist but are unused until Phase 2.
 
 ---
 
 ## 5. How it is built
 
 Next.js App Router, React 19, Tailwind CSS 4, GSAP with ScrollTrigger,
-Supabase.
+Cloudflare D1 and R2.
 
 ```
 src/
   app/
-    (site)/        Home, Gallery, Privacy, Cookies
+    (site)/        Home, Gallery, Order, Terms, Order policy, Privacy, Cookies
     api/reviews/   Review submission
+    api/orders/    Cake requests
   components/
     home/          The Home page sections
     gallery/       Grid and lightbox
     reviews/       Reviews list and the review form
     contact/       Contact dialog
+    order/         The cake request form and its field primitives
     layout/        Header, footer, shared state
     motion/        Scroll reveal and progress
     ui/            Image frame, modal
-  content/site.ts  ALL wording and cake data
+  content/
+    site.ts        ALL wording and cake data
+    order.ts       Wording for the request form and its policies
   lib/
     motion.ts      GSAP setup and shared scroll helpers
     reviews/       Validation, sanitising, types
-    supabase/      Database clients
-supabase/schema.sql
+    orders/        Validation and order-number generation
+    d1/client.ts   Cloudflare D1 over its REST API
+    r2/client.ts   Cloudflare R2 over its S3 API
+db/d1/
+  schema.sql       Reviews table
+  migrations/      Ordering system
 ```
 
 ### Motion
