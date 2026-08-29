@@ -17,6 +17,9 @@ import {
   type OrderStatus,
 } from "@/lib/admin/orders";
 import { defaultDepositPercentage } from "@/lib/admin/settings";
+import { getBalance, getPayments } from "@/lib/admin/payments";
+import { isStripeConfigured, isStripeTestMode } from "@/lib/stripe/client";
+import { isEmailConfigured } from "@/lib/email/resend";
 import { OrderWorkspace } from "@/components/admin/OrderWorkspace";
 
 export const dynamic = "force-dynamic";
@@ -50,16 +53,27 @@ export default async function AdminOrderPage({
   const order = await getOrder(id);
   if (!order) notFound();
 
-  const [confirmed, images, items, quotes, messages, activity, depositDefault] =
-    await Promise.all([
-      getConfirmed(id),
-      getImages(id),
-      getItems(id),
-      getQuotes(id),
-      getMessages(id),
-      getActivity(id),
-      defaultDepositPercentage(),
-    ]);
+  const [
+    confirmed,
+    images,
+    items,
+    quotes,
+    messages,
+    activity,
+    depositDefault,
+    payments,
+    balance,
+  ] = await Promise.all([
+    getConfirmed(id),
+    getImages(id),
+    getItems(id),
+    getQuotes(id),
+    getMessages(id),
+    getActivity(id),
+    defaultDepositPercentage(),
+    getPayments(id),
+    getBalance(id),
+  ]);
 
   const effective = effectiveOrder(order, confirmed);
   const changed = changedFields(order, confirmed);
@@ -146,6 +160,19 @@ export default async function AdminOrderPage({
           createdAt: entry.created_at,
         }))}
         depositDefault={depositDefault}
+        payments={payments.map((payment) => ({
+          id: payment.id,
+          type: payment.payment_type,
+          amountPence: payment.amount_pence,
+          status: payment.status,
+          sessionId: payment.stripe_checkout_session_id,
+          intentId: payment.stripe_payment_intent_id,
+          paidAt: payment.paid_at,
+        }))}
+        balance={balance}
+        stripeReady={isStripeConfigured()}
+        stripeTestMode={isStripeTestMode()}
+        emailReady={isEmailConfigured()}
       />
     </div>
   );

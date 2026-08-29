@@ -66,10 +66,23 @@ export async function putObject(
   body: ArrayBuffer,
   contentType: string,
 ): Promise<string> {
+  /*
+   * Content-Length is set by hand.
+   *
+   * R2's S3 API refuses a PUT without one — HTTP 411 — and fetch will happily
+   * send an ArrayBuffer with chunked encoding and no length. Passing a view
+   * and stating the byte count keeps the request a plain, signed, fixed-length
+   * upload.
+   */
+  const bytes = new Uint8Array(body);
+
   const response = await getClient().fetch(objectUrl(key), {
     method: "PUT",
-    body,
-    headers: { "Content-Type": contentType },
+    body: bytes,
+    headers: {
+      "Content-Type": contentType,
+      "Content-Length": String(bytes.byteLength),
+    },
   });
 
   if (!response.ok) {

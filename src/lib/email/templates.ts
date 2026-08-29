@@ -38,8 +38,16 @@ export type QuoteEmailData = {
   message: string;
   footer?: string;
   contactLines?: string[];
-  /** Phase 3 supplies a Stripe URL. Until then the template says so. */
-  payDepositUrl?: string | null;
+  /**
+   * The secure quote page, not a Stripe URL.
+   *
+   * The link points at this application, which creates a fresh Checkout
+   * session when the customer is ready. A Stripe URL emailed weeks earlier
+   * would carry an amount that may since have changed, and would expire.
+   */
+  quoteUrl?: string | null;
+  /** False when Stripe is not configured, so no dead button is shown. */
+  paymentEnabled?: boolean;
 };
 
 /** Escapes text going into HTML. Owner-written, but never trusted regardless. */
@@ -117,24 +125,36 @@ export function quoteEmail(data: QuoteEmailData) {
     .join("");
 
   /*
-   * The payment button.
+   * The button.
    *
-   * Phase 3 passes a Stripe URL. Until it does, the template says how payment
-   * will be arranged rather than rendering a button that goes nowhere — a dead
-   * "Pay Deposit" button in a customer's inbox is worse than no button.
+   * It links to the quote page on this site, never straight to Stripe. The
+   * amount is worked out when the customer arrives, so a link opened three
+   * weeks later cannot charge a figure that has since changed.
    */
-  const payment = data.payDepositUrl
+  const payment = data.quoteUrl && data.paymentEnabled !== false
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
          <tr><td style="background:#2a1d17;">
-           <a href="${escape(data.payDepositUrl)}"
+           <a href="${escape(data.quoteUrl as string)}"
               style="display:inline-block;padding:14px 32px;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;">
-             Pay deposit
+             Review quote &amp; pay deposit
            </a>
          </td></tr>
-       </table>`
-    : `<p style="margin:0 0 24px;padding:14px 16px;background:#f4ece1;border-left:3px solid #c9a882;">
-         We will be in touch with payment details for the deposit.
-       </p>`;
+       </table>
+       <p style="margin:0 0 20px;font-size:13px;color:#6b5347;">
+         Or open: <a href="${escape(data.quoteUrl as string)}" style="color:#6b5347;">${escape(data.quoteUrl as string)}</a>
+       </p>`
+    : data.quoteUrl
+      ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
+           <tr><td style="background:#2a1d17;">
+             <a href="${escape(data.quoteUrl)}" style="display:inline-block;padding:14px 32px;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;">Review your quote</a>
+           </td></tr>
+         </table>
+         <p style="margin:0 0 24px;padding:14px 16px;background:#f4ece1;border-left:3px solid #c9a882;">
+           We will be in touch to arrange payment of the deposit.
+         </p>`
+      : `<p style="margin:0 0 24px;padding:14px 16px;background:#f4ece1;border-left:3px solid #c9a882;">
+           We will be in touch with payment details for the deposit.
+         </p>`;
 
   const inner = `
     <p style="margin:0 0 16px;">Dear ${escape(data.customerName)},</p>
@@ -158,6 +178,11 @@ export function quoteEmail(data: QuoteEmailData) {
     </table>
 
     ${payment}
+
+    <p style="margin:0 0 12px;padding:14px 16px;background:#f4ece1;border-left:3px solid #c9a882;color:#2a1d17;">
+      Your order is confirmed only once the deposit payment has gone through. Until
+      then the date remains available to other customers.
+    </p>
 
     <p style="margin:0 0 24px;padding:14px 16px;background:#f0e4e8;border-left:3px solid #6d3b4d;color:#2a1d17;">
       <strong style="font-weight:normal;">${escape(DEPOSIT_NOTICE)}</strong>
@@ -184,10 +209,11 @@ export function quoteEmail(data: QuoteEmailData) {
     `  Deposit (${data.depositPercentage}%): ${formatPounds(data.depositAmountPence)}`,
     `  Remaining balance: ${formatPounds(data.remainingBalancePence)}`,
     "",
-    data.payDepositUrl
-      ? `Pay your deposit: ${data.payDepositUrl}`
+    data.quoteUrl
+      ? `Review your quote and pay the deposit: ${data.quoteUrl}`
       : "We will be in touch with payment details for the deposit.",
     "",
+    "Your order is confirmed only once the deposit payment has gone through.",
     DEPOSIT_NOTICE,
     "",
     ...(data.contactLines ?? []),
@@ -256,6 +282,9 @@ export function depositConfirmationEmail(data: {
 export function finalPaymentEmail(data: {
   customerName: string;
   orderNumber: string;
+  requiredDate?: string;
+  /** The owner's optional note for this particular order. */
+  message?: string;
   totalPence: number;
   paidPence: number;
   remainingBalancePence: number;
@@ -268,15 +297,20 @@ export function finalPaymentEmail(data: {
          <tr><td style="background:#2a1d17;">
            <a href="${escape(data.payBalanceUrl)}" style="display:inline-block;padding:14px 32px;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;">Pay remaining balance</a>
          </td></tr>
-       </table>`
+       </table>
+       <p style="margin:0 0 20px;font-size:13px;color:#6b5347;">
+         Or open: <a href="${escape(data.payBalanceUrl)}" style="color:#6b5347;">${escape(data.payBalanceUrl)}</a>
+       </p>`
     : `<p style="margin:0 0 24px;padding:14px 16px;background:#f4ece1;border-left:3px solid #c9a882;">We will be in touch with payment details for the balance.</p>`;
 
   const inner = `
     <p style="margin:0 0 16px;">Dear ${escape(data.customerName)},</p>
     <p style="margin:0 0 16px;">Your cake is ready. The remaining balance is now due.</p>
+    ${data.message ? paragraphs(data.message) : ""}
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
       ${moneyRow("Order reference", data.orderNumber)}
+      ${data.requiredDate ? moneyRow("Date required", data.requiredDate) : ""}
       ${moneyRow("Total", formatPounds(data.totalPence))}
       ${moneyRow("Already paid", formatPounds(data.paidPence))}
       ${moneyRow("Remaining balance", formatPounds(data.remainingBalancePence), true)}
@@ -295,7 +329,9 @@ export function finalPaymentEmail(data: {
       "",
       "Your cake is ready. The remaining balance is now due.",
       "",
+      data.message ?? "",
       `Order reference: ${data.orderNumber}`,
+      data.requiredDate ? `Date required: ${data.requiredDate}` : "",
       `Total: ${formatPounds(data.totalPence)}`,
       `Already paid: ${formatPounds(data.paidPence)}`,
       `Remaining balance: ${formatPounds(data.remainingBalancePence)}`,

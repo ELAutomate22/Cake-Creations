@@ -64,6 +64,24 @@ export type OrderWorkspaceProps = {
   }[];
   activity: { id: string; type: string; description: string; createdAt: string }[];
   depositDefault: number;
+  payments: {
+    id: string;
+    type: "deposit" | "balance";
+    amountPence: number;
+    status: string;
+    sessionId: string | null;
+    intentId: string | null;
+    paidAt: string | null;
+  }[];
+  balance: {
+    totalPence: number;
+    paidPence: number;
+    outstandingPence: number;
+    hasPaidDeposit: boolean;
+  };
+  stripeReady: boolean;
+  stripeTestMode: boolean;
+  emailReady: boolean;
 };
 
 function Section({
@@ -104,6 +122,8 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
 
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
+  const [finalMessage, setFinalMessage] = useState("");
+  const [refundNote, setRefundNote] = useState("");
   const [declineReason, setDeclineReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [showPreview, setShowPreview] = useState(false);
@@ -171,6 +191,21 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
         </div>
         <StatusBadge status={props.status} />
       </div>
+
+      {/*
+        The one thing the owner must not have to go looking for.
+
+        A paid deposit is non-refundable by the policy the customer accepted,
+        so it is stated at the top of the order rather than in the payment
+        section further down.
+      */}
+      {props.balance.hasPaidDeposit && (
+        <p className="mt-5 border-2 border-plum bg-plum/5 px-4 py-3 text-sm text-plum-deep">
+          <strong className="font-normal tracking-[0.08em]">
+            DEPOSIT PAID — NON-REFUNDABLE
+          </strong>
+        </p>
+      )}
 
       {notice && (
         <p
@@ -598,20 +633,54 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
           >
             {busy === "quote" ? "Saving…" : "Save quote version"}
           </button>
+
+          <button
+            type="button"
+            disabled={busy !== null || props.quotes.length === 0}
+            onClick={() => {
+              if (!confirm("Send this quote to the customer?")) return;
+              void post(`/api/admin/orders/${props.orderId}/send-quote`, {}, "send-quote");
+            }}
+            className="btn btn-solid py-2 text-xs disabled:opacity-50"
+          >
+            {busy === "send-quote" ? "Sending…" : "Send quote to customer"}
+          </button>
         </div>
 
         {/*
-          Sending is not offered.
+          Sending supersedes.
 
-          The quote email carries a Pay deposit button, and there is no payment
-          URL until Stripe exists. A quote arriving with a button that goes
-          nowhere is worse than one that has not arrived.
+          The newest quote becomes the active one and every older link stops
+          working, so a customer cannot pay yesterday's price from an older
+          email.
         */}
-        <p className="mt-4 border border-caramel/40 bg-caramel/10 px-4 py-3 text-sm text-espresso">
-          Sending quotes is switched off until Stripe is connected in Phase 3, so no
-          customer receives a payment button that does not work. Versions saved here are
-          kept and can be sent then.
+        <p className="mt-4 text-xs text-cocoa-soft">
+          Sending makes the newest quote the active one and stops any older link from
+          being used. The email contains a secure link to a payment page, not a price
+          the customer can change.
         </p>
+
+        {!props.emailReady && (
+          <p className="mt-3 border border-caramel/40 bg-caramel/10 px-4 py-3 text-sm text-espresso">
+            Email is not configured, so sending will fail and be recorded as such. Set
+            RESEND_API_KEY and FROM_EMAIL.
+          </p>
+        )}
+
+        {!props.stripeReady && (
+          <p className="mt-3 border border-caramel/40 bg-caramel/10 px-4 py-3 text-sm text-espresso">
+            Stripe is not configured. The quote can still be sent, and the page will
+            explain that payment will be arranged directly rather than showing a button
+            that does not work.
+          </p>
+        )}
+
+        {props.stripeReady && props.stripeTestMode && (
+          <p className="mt-3 border border-caramel/40 bg-caramel/10 px-4 py-3 text-sm text-espresso">
+            Stripe is in <strong className="font-normal">test mode</strong>. No real
+            money will move.
+          </p>
+        )}
 
         {showPreview && (
           <div className="mt-5 border border-espresso/15 bg-ivory p-5">
@@ -778,6 +847,30 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
                     // the owner sees what the customer saw.
                     dangerouslySetInnerHTML={{ __html: message.body }}
                   />
+
+                  {/*
+                    A payment is never rolled back because email failed, so a
+                    confirmation that did not send leaves a paid order and an
+                    uninformed customer. This is how that is put right.
+                  */}
+                  {message.status !== "sent" && (
+                    <div className="border-t border-espresso/10 px-4 py-3">
+                      <button
+                        type="button"
+                        disabled={busy !== null}
+                        onClick={() =>
+                          post(
+                            `/api/admin/orders/${props.orderId}/retry-email`,
+                            { messageId: message.id },
+                            `retry-${message.id}`,
+                          )
+                        }
+                        className="btn btn-outline py-2 text-xs disabled:opacity-50"
+                      >
+                        {busy === `retry-${message.id}` ? "Resending…" : "Retry this email"}
+                      </button>
+                    </div>
+                  )}
                 </details>
               </li>
             ))}
@@ -801,10 +894,143 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
 
       {/* ── Payments ─────────────────────────────────────────────────────── */}
       <Section title="Payments">
-        <p className="text-sm text-cocoa-soft">
-          No payments have been taken. Card payments arrive with Stripe in Phase 3;
-          amounts already paid will be listed here and subtracted from the balance.
+        <dl className="text-sm">
+          <div className="flex justify-between border-b border-espresso/10 py-2">
+            <dt className="text-cocoa-soft">Current total</dt>
+            <dd className="text-cocoa">{formatPounds(props.balance.totalPence)}</dd>
+          </div>
+          <div className="flex justify-between border-b border-espresso/10 py-2">
+            <dt className="text-cocoa-soft">Already paid</dt>
+            <dd className="text-cocoa">{formatPounds(props.balance.paidPence)}</dd>
+          </div>
+          <div className="flex justify-between py-2">
+            <dt className="text-espresso">Outstanding</dt>
+            <dd className="font-serif text-lg text-espresso">
+              {formatPounds(props.balance.outstandingPence)}
+            </dd>
+          </div>
+        </dl>
+
+        {/*
+          Stated because it is the rule people expect to be broken.
+
+          The outstanding figure is the current total minus what was actually
+          paid — never the deposit percentage recalculated against a revised
+          total. A payment that happened is not re-derived.
+        */}
+        <p className="mt-3 text-xs text-cocoa-soft">
+          Outstanding is the current total minus payments actually received. Changing
+          the total never alters a payment already taken.
         </p>
+
+        {props.payments.length > 0 && (
+          <ul className="mt-5 space-y-2 text-sm">
+            {props.payments.map((payment) => (
+              <li
+                key={payment.id}
+                className="flex flex-wrap items-center justify-between gap-3 border border-espresso/12 bg-ivory px-4 py-3"
+              >
+                <span className="capitalize text-espresso">{payment.type}</span>
+                <span className="text-cocoa">{formatPounds(payment.amountPence)}</span>
+                <span
+                  className={
+                    payment.status === "paid" ? "text-success" : "text-cocoa-soft"
+                  }
+                >
+                  {payment.status}
+                </span>
+                <span className="text-xs text-cocoa-soft">
+                  {payment.paidAt
+                    ? payment.paidAt.slice(0, 16).replace("T", " ")
+                    : "not paid"}
+                </span>
+                {payment.intentId && (
+                  <span className="font-mono text-[0.6875rem] text-cocoa-soft">
+                    {payment.intentId}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {props.payments.length === 0 && (
+          <p className="mt-4 text-sm text-cocoa-soft">No payments yet.</p>
+        )}
+
+        {/* ── Ask for the balance ────────────────────────────────────── */}
+        {props.balance.hasPaidDeposit && props.balance.outstandingPence > 0 && (
+          <div className="mt-8 border-t border-espresso/12 pt-6">
+            <h3 className="text-sm text-espresso">Request the final payment</h3>
+            <p className="mt-1 text-sm text-cocoa-soft">
+              Sends the customer a secure link for{" "}
+              {formatPounds(props.balance.outstandingPence)}. The amount is worked out
+              again when they open it, so it is never out of date.
+            </p>
+            <textarea
+              aria-label="Optional message for the final payment request"
+              rows={3}
+              placeholder="Optional note — collection times, anything else."
+              value={finalMessage}
+              onChange={(event) => setFinalMessage(event.target.value)}
+              className={`${control} mt-3 resize-y`}
+            />
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() =>
+                post(
+                  `/api/admin/orders/${props.orderId}/request-final`,
+                  { message: finalMessage },
+                  "final",
+                )
+              }
+              className="btn btn-solid mt-3 py-2 text-xs disabled:opacity-50"
+            >
+              {busy === "final" ? "Sending…" : "Request final payment"}
+            </button>
+          </div>
+        )}
+
+        {/*
+          No refund button, deliberately.
+
+          The deposit is non-refundable under the accepted policy, so a refund
+          is an exception someone chooses to make. It is made in Stripe, and
+          only recorded here.
+        */}
+        {props.balance.paidPence > 0 && props.status !== "refunded" && (
+          <div className="mt-8 border-t border-espresso/12 pt-6">
+            <h3 className="text-sm text-espresso">Record a refund made in Stripe</h3>
+            <p className="mt-1 text-sm text-cocoa-soft">
+              This refunds nothing. Refund in Stripe first, then record it here so the
+              two agree. The payment history stays as it is, because the money was
+              taken at the time.
+            </p>
+            <input
+              aria-label="Note about the refund"
+              value={refundNote}
+              onChange={(event) => setRefundNote(event.target.value)}
+              placeholder="Refunded in Stripe on… and why"
+              className={`${control} mt-3`}
+            />
+            <button
+              type="button"
+              disabled={busy !== null || refundNote.trim().length < 5}
+              onClick={() => {
+                if (!confirm("Record this order as refunded?")) return;
+                void post(
+                  `/api/admin/orders/${props.orderId}/refund`,
+                  { note: refundNote },
+                  "refund",
+                );
+              }}
+              className="btn btn-outline mt-3 py-2 text-xs disabled:opacity-40"
+            >
+              {busy === "refund" ? "Recording…" : "Record as refunded"}
+            </button>
+          </div>
+        )}
       </Section>
 
       {/* ── Ending the order ─────────────────────────────────────────────── */}
