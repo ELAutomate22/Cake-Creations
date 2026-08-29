@@ -203,10 +203,20 @@ export function Footer() {
           <p>
             © {year} {business.name}. All rights reserved.
           </p>
-          <ul className="flex gap-6">
+          <ul className="flex flex-wrap gap-x-6 gap-y-2">
+            <li>
+              <Link href="/terms" className="transition-colors hover:text-ivory/80">
+                Terms &amp; Conditions
+              </Link>
+            </li>
             <li>
               <Link href="/privacy" className="transition-colors hover:text-ivory/80">
                 Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/order-policy" className="transition-colors hover:text-ivory/80">
+                Order &amp; Cancellation Policy
               </Link>
             </li>
             <li>

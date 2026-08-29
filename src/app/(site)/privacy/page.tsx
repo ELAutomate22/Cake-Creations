@@ -29,9 +29,49 @@ export default function PrivacyPage() {
           <section>
             <h2 className="display-sm text-espresso">What this website collects</h2>
             <p className="voice mt-4">
-              This website does not take orders, and it has no contact form,
-              enquiry form or account system. The only information it collects is
-              what someone chooses to enter when leaving a review.
+              This website has no account system and takes no payment. It
+              collects information in two places only: a review, when someone
+              chooses to leave one, and a cake request, when someone chooses to
+              send one.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="display-sm text-espresso">Cake requests</h2>
+            <p className="voice mt-4">
+              When a cake request is sent, we store what was entered on the
+              form: your name, email address and phone number, the details of
+              the cake and occasion, the date it is needed, and — if delivery
+              was chosen — the delivery address and postcode. Any reference
+              photographs attached are stored alongside it.
+            </p>
+            <p className="voice mt-4">
+              This is used to price the cake, reply to you, and make it. It is
+              not used for marketing, is never sold, and is not shared with
+              anyone beyond the services that host this website and its data.
+            </p>
+            <p className="voice mt-4">
+              A one-way fingerprint of your network address is also stored, so
+              the form cannot be used to send hundreds of requests at once. The
+              address itself is never kept, and the fingerprint cannot be turned
+              back into one.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="display-sm text-espresso">
+              How long cake requests are kept
+            </h2>
+            <p className="voice mt-4">
+              An order is deleted 30 days after it is completed, cancelled,
+              declined or refunded. Deletion removes the order, its quotes and
+              messages, its history, and any reference photographs you sent.
+            </p>
+            <p className="voice mt-4">
+              The 30 days are counted from the day the order closed, not from
+              the day it was sent — a cake ordered a year ahead stays live until
+              it has been made. Records of any payment are held separately by
+              the payment provider under its own terms.
             </p>
           </section>
 

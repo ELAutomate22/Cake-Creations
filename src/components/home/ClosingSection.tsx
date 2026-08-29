@@ -109,7 +109,10 @@ export function ClosingSection() {
         </p>
 
         <div className="mt-12 flex flex-wrap justify-center gap-4">
-          <Link href="/gallery" data-closing-action className="btn btn-solid">
+          <Link href="/order" data-closing-action className="btn btn-solid">
+            Order a Cake
+          </Link>
+          <Link href="/gallery" data-closing-action className="btn btn-outline">
             View Gallery
           </Link>
           <button

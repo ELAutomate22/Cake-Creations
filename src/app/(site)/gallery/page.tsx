@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { business, gallery } from "@/content/site";
 import { GalleryGrid } from "@/components/gallery/GalleryGrid";
 
@@ -49,6 +50,14 @@ export default async function GalleryPage({
           <p className="voice measure-wide mt-6 text-cocoa">
             {gallery.standfirst}
           </p>
+
+          {/* Placed after the collection is described rather than before it:
+              the point of this page is to be browsed first. */}
+          <div className="mt-9">
+            <Link href="/order" className="btn btn-solid">
+              Order a Cake
+            </Link>
+          </div>
         </div>
       </header>
 

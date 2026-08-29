@@ -200,14 +200,30 @@ export function Header() {
             <button
               type="button"
               onClick={openContact}
-              className={`border px-6 py-2.5 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
+              className={`py-1 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
                 solid
-                  ? "border-espresso/30 text-espresso hover:bg-espresso hover:text-ivory"
-                  : "border-ivory/45 text-ivory hover:bg-ivory hover:text-espresso"
+                  ? "text-cocoa-soft hover:text-espresso"
+                  : "text-ivory/75 hover:text-ivory"
               }`}
             >
               Contact
             </button>
+
+            {/*
+              The one filled action in the header. Contact steps back to plain
+              text so there is a single obvious next step rather than two
+              outlines competing for the same attention.
+            */}
+            <Link
+              href="/order"
+              className={`border px-6 py-2.5 text-[0.8125rem] uppercase tracking-[0.18em] transition-colors ${
+                solid
+                  ? "border-espresso bg-espresso text-ivory hover:bg-transparent hover:text-espresso"
+                  : "border-ivory bg-ivory text-espresso hover:bg-transparent hover:text-ivory"
+              }`}
+            >
+              Order a Cake
+            </Link>
           </nav>
 
           {/* ── Mobile toggle ────────────────────────────────────────────── */}
@@ -326,6 +342,24 @@ export function Header() {
               >
                 Contact
               </button>
+            </li>
+            <li>
+              <Link
+                href="/order"
+                onClick={closeMenu}
+                className="display block py-3 text-plum"
+                style={
+                  menuOpen
+                    ? {
+                        animation: `rise 520ms var(--ease-silk) ${
+                          80 + (navigation.length + 2) * 70
+                        }ms both`,
+                      }
+                    : undefined
+                }
+              >
+                Order a Cake
+              </Link>
             </li>
           </ul>
 

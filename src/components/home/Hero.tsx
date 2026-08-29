@@ -151,7 +151,10 @@ export function Hero({ statement }: HeroProps) {
           </p>
 
           <div data-hero-line className="mt-11 flex flex-wrap gap-4">
-            <Link href="/gallery" className="btn btn-solid">
+            <Link href="/order" className="btn btn-solid">
+              Order a Cake
+            </Link>
+            <Link href="/gallery" className="btn btn-outline">
               View Gallery
             </Link>
             <button type="button" onClick={openContact} className="btn btn-outline">

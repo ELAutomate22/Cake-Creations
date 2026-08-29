@@ -17,9 +17,10 @@
  * IMPORTANT: This business sells CAKES ONLY. Do not add cupcakes, cookies,
  * brownies, pastries, dessert tables or any other product to this file.
  *
- * IMPORTANT: This website does not take orders. There is deliberately no
- * ordering, booking, quoting or enquiry form anywhere in it. Customers get in
- * touch using the contact details below.
+ * IMPORTANT: This website takes cake REQUESTS, not orders. The /order form
+ * collects what a customer wants and nothing else: it shows no price, takes no
+ * payment and confirms no date. A quote is sent afterwards, and an order only
+ * exists once a deposit has been paid. Nothing here may imply otherwise.
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
@@ -798,4 +799,15 @@ export const navigation = [
 export const legal = {
   privacyUpdated: "[DATE]",
   cookiesUpdated: "[DATE]",
+  termsUpdated: "[DATE]",
+  orderPolicyUpdated: "[DATE]",
+
+  /**
+   * The wording currently in force.
+   *
+   * Stamped onto every cake request at submission, so it is always possible to
+   * say which version of the policies a given customer agreed to. Change it
+   * whenever the policy pages change in a way that matters.
+   */
+  policyVersion: "2026-08-29",
 } as const;
