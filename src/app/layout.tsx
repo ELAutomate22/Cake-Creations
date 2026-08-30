@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { business, contact, isProvided, resolved } from "@/content/site";
+import { business, contact, isProvided } from "@/content/site";
+import type { PublicContact } from "@/content/site";
+import { getPublicContact } from "@/lib/site-settings";
 import "./globals.css";
 
 /**
@@ -108,8 +110,11 @@ export const viewport: Viewport = {
  *
  * Only facts that have actually been supplied are included — an unfilled
  * placeholder is left out rather than published to search engines.
+ *
+ * The telephone and email come from the live contact details, so a number
+ * changed in the admin is the number search engines are given too.
  */
-function businessSchema() {
+function businessSchema(details: PublicContact) {
   const schema: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Bakery",
@@ -129,12 +134,12 @@ function businessSchema() {
 
   // Schema.org takes one telephone or several; only collapse to a bare string
   // when there is genuinely one, so a single number is not published as a list.
-  if (resolved.phones.length === 1) {
-    schema.telephone = resolved.phones[0].number;
-  } else if (resolved.phones.length > 1) {
-    schema.telephone = resolved.phones.map((entry) => entry.number);
+  if (details.phones.length === 1) {
+    schema.telephone = details.phones[0].number;
+  } else if (details.phones.length > 1) {
+    schema.telephone = details.phones.map((entry) => entry.number);
   }
-  if (isProvided(contact.email)) schema.email = contact.email;
+  if (isProvided(details.email)) schema.email = details.email;
   if (isProvided(contact.location)) {
     schema.address = {
       "@type": "PostalAddress",
@@ -153,16 +158,18 @@ function businessSchema() {
   return schema;
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const details = await getPublicContact();
+
   return (
     <html lang="en-GB" className={`${cormorant.variable} ${inter.variable}`}>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(businessSchema()),
+            __html: JSON.stringify(businessSchema(details)),
           }}
         />
       </head>

@@ -111,6 +111,22 @@ export const brandStatements: string[] = [
  */
 export type PhoneNumber = { number: string; label: string };
 
+/**
+ * The contact details the public pages actually render.
+ *
+ * The values below are the starting point, not the last word: anything the
+ * owner sets in the admin Settings page is stored in the database and wins
+ * over what is written here. This type is the shape both sides agree on, and
+ * it lives in this file rather than beside the database code so that a client
+ * component can name it without reaching into anything server-only.
+ */
+export type PublicContact = {
+  phones: PhoneNumber[];
+  email: string;
+  collection: string;
+  delivery: string;
+};
+
 export const contact = {
   person: "[CONTACT PERSON]",
 

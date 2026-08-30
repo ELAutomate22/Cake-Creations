@@ -25,7 +25,10 @@ import { useSiteUI } from "./SiteChrome";
  * footer never shows a customer a placeholder in the shape of a phone number.
  */
 export function Footer() {
-  const { openContact, openReview } = useSiteUI();
+  // `details` are the live contact values from the admin; `contact` in the
+  // content file still supplies what the admin does not manage.
+  const { openContact, openReview, contact: details } = useSiteUI();
+  const hasEmail = isProvided(details.email);
   const rootRef = useRef<HTMLElement>(null);
   const wordmarkRef = useRef<HTMLSpanElement>(null);
 
@@ -117,7 +120,7 @@ export function Footer() {
           <div>
             <h2 className="eyebrow text-ivory/50">Get in touch</h2>
             <ul className="mt-6 space-y-3 text-sm text-ivory/80">
-              {resolved.phones.map((entry) => (
+              {details.phones.map((entry) => (
                 <li key={entry.number}>
                   <a
                     href={telHref(entry.number)}
@@ -130,21 +133,21 @@ export function Footer() {
                   )}
                 </li>
               ))}
-              {resolved.hasEmail && (
+              {hasEmail && (
                 <li>
                   <a
-                    href={`mailto:${contact.email}`}
+                    href={`mailto:${details.email}`}
                     className="break-all transition-colors hover:text-ivory"
                   >
-                    {contact.email}
+                    {details.email}
                   </a>
                 </li>
               )}
               {isProvided(contact.location) && <li>{contact.location}</li>}
 
               {/* Nothing real to show yet — say so rather than invent it. */}
-              {resolved.phones.length === 0 &&
-                !resolved.hasEmail &&
+              {details.phones.length === 0 &&
+                !hasEmail &&
                 !isProvided(contact.location) && (
                   <li className="text-ivory/45">
                     Contact details to be provided.

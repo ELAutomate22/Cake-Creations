@@ -13,6 +13,7 @@ import { Footer } from "./Footer";
 import { ContactModal } from "@/components/contact/ContactModal";
 import { ReviewFormModal } from "@/components/reviews/ReviewFormModal";
 import { ScrollTrigger } from "@/lib/motion";
+import type { PublicContact } from "@/content/site";
 
 /**
  * Site-wide furniture: header, footer, and the two dialogs that can be opened
@@ -28,6 +29,14 @@ type SiteUI = {
   openReview: () => void;
   /** Bumped whenever a review is published, so lists know to refresh. */
   reviewsVersion: number;
+  /**
+   * The contact details as they stand now, read on the server in the layout.
+   *
+   * They arrive here rather than being imported from the content file because
+   * the owner can change them in the admin, and the footer and the Contact
+   * dialog must not be able to show different answers.
+   */
+  contact: PublicContact;
 };
 
 const SiteUIContext = createContext<SiteUI | null>(null);
@@ -40,7 +49,13 @@ export function useSiteUI(): SiteUI {
   return context;
 }
 
-export function SiteChrome({ children }: { children: React.ReactNode }) {
+export function SiteChrome({
+  children,
+  contact,
+}: {
+  children: React.ReactNode;
+  contact: PublicContact;
+}) {
   const [contactOpen, setContactOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewsVersion, setReviewsVersion] = useState(0);
@@ -61,8 +76,8 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ openContact, openReview, reviewsVersion }),
-    [openContact, openReview, reviewsVersion],
+    () => ({ openContact, openReview, reviewsVersion, contact }),
+    [openContact, openReview, reviewsVersion, contact],
   );
 
   return (

@@ -10,6 +10,11 @@ import type { Settings } from "@/lib/admin/settings";
  * A placeholder in square brackets is shown as an empty field with the
  * placeholder as a hint, so the owner sees what is missing rather than being
  * asked to edit around "[EMAIL ADDRESS]".
+ *
+ * The phone numbers, the email address and the collection and delivery notes
+ * appear on the public website. Saving here changes them there straight away:
+ * the save invalidates the cached copy the site reads. Clearing a field
+ * removes it from the site rather than restoring an older value.
  */
 
 const FIELDS: {
@@ -32,7 +37,17 @@ const FIELDS: {
   },
   { key: "business_email", label: "Business email" },
   { key: "business_phone", label: "Business phone" },
+  {
+    key: "business_phone_label",
+    label: "Whose phone this is",
+    hint: "Shown beside the number so a caller knows who they are ringing. Leave empty for none.",
+  },
   { key: "business_phone_secondary", label: "Second phone" },
+  {
+    key: "business_phone_secondary_label",
+    label: "Whose second phone this is",
+    hint: "Leave empty for none.",
+  },
   { key: "collection_information", label: "Collection information", type: "textarea" },
   { key: "delivery_information", label: "Delivery information", type: "textarea" },
   {

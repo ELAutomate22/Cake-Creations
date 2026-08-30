@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import { sanitiseText } from "@/lib/reviews/sanitise";
 import { SETTING_KEYS, getSettings, setSetting, type SettingKey } from "@/lib/admin/settings";
+import { SITE_SETTINGS_TAG } from "@/lib/site-settings";
 
 /**
  * Business settings.
@@ -12,6 +14,11 @@ import { SETTING_KEYS, getSettings, setSetting, type SettingKey } from "@/lib/ad
  * Changing the default deposit affects future quotes only. Quotes already
  * created hold their own percentage, so nothing here can alter a figure a
  * customer has already been given.
+ *
+ * Several of these are shown on the public website, which caches its copy so
+ * that a page view does not cost a database query. A save therefore has to
+ * invalidate that cache, or the change would sit in the database while the
+ * site kept serving the old value — which is exactly what used to happen.
  */
 
 export const runtime = "nodejs";
@@ -53,6 +60,15 @@ export async function POST(request: Request) {
 
     await setSetting(key as SettingKey, value);
     written.push(key);
+  }
+
+  // Only when something actually changed, and only after it is written.
+  //
+  // "max" is the widest cache profile, so every stored entry under the tag is
+  // purged regardless of how long it was meant to live. A narrower profile
+  // would leave older copies in place, which is the bug this is here to stop.
+  if (written.length > 0) {
+    revalidateTag(SITE_SETTINGS_TAG, "max");
   }
 
   return NextResponse.json({ ok: true, written, settings: await getSettings() });

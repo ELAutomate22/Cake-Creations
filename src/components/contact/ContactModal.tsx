@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Modal } from "@/components/ui/Modal";
+import { useSiteUI } from "@/components/layout/SiteChrome";
 import {
   business,
   contact,
@@ -135,6 +136,10 @@ export function ContactModal({
   open: boolean;
   onClose: () => void;
 }) {
+  // The numbers, the email address and the collection and delivery notes come
+  // from the admin. Everything else on this dialog is content-file wording.
+  const { contact: details } = useSiteUI();
+
   const rows: React.ReactNode[] = [];
   let index = 0;
 
@@ -146,7 +151,7 @@ export function ContactModal({
   // One row per number. Where a name has been given for a number it becomes
   // the row's label, so a visitor with two numbers in front of them knows
   // which of the two they are ringing.
-  for (const entry of resolved.phones) {
+  for (const entry of details.phones) {
     rows.push(
       <Row
         key={entry.number}
@@ -158,9 +163,9 @@ export function ContactModal({
       />,
     );
   }
-  if (resolved.hasEmail) {
+  if (isProvided(details.email)) {
     rows.push(
-      <Row key="email" icon={<Icon name="mail" />} label="Email" value={contact.email} href={`mailto:${contact.email}`} index={index++} />,
+      <Row key="email" icon={<Icon name="mail" />} label="Email" value={details.email} href={`mailto:${details.email}`} index={index++} />,
     );
   }
   if (resolved.hasWhatsapp) {
@@ -178,14 +183,14 @@ export function ContactModal({
       <Row key="area" icon={<Icon name="pin" />} label="Service area" value={contact.serviceArea} index={index++} />,
     );
   }
-  if (isProvided(contact.collection)) {
+  if (isProvided(details.collection)) {
     rows.push(
-      <Row key="collection" icon={<Icon name="pin" />} label="Collection" value={contact.collection} index={index++} />,
+      <Row key="collection" icon={<Icon name="pin" />} label="Collection" value={details.collection} index={index++} />,
     );
   }
-  if (isProvided(contact.delivery)) {
+  if (isProvided(details.delivery)) {
     rows.push(
-      <Row key="delivery" icon={<Icon name="pin" />} label="Delivery" value={contact.delivery} index={index++} />,
+      <Row key="delivery" icon={<Icon name="pin" />} label="Delivery" value={details.delivery} index={index++} />,
     );
   }
   if (isProvided(contact.responseHours)) {

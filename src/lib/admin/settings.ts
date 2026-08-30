@@ -8,6 +8,11 @@ import { query } from "@/lib/d1/client";
  * as text and read here. Anything read for a quote is copied onto that quote
  * when it is sent, so changing a default later never rewrites a quote a
  * customer has already been given.
+ *
+ * Some of these are also shown to the public — the phone numbers, the email
+ * address, the collection and delivery notes. `src/lib/site-settings.ts` is
+ * what merges them over the content file and invalidates the cached copy when
+ * they change.
  */
 
 export const SETTING_KEYS = [
@@ -15,7 +20,9 @@ export const SETTING_KEYS = [
   "default_quote_message",
   "business_email",
   "business_phone",
+  "business_phone_label",
   "business_phone_secondary",
+  "business_phone_secondary_label",
   "collection_information",
   "delivery_information",
   "email_footer",
