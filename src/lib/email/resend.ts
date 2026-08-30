@@ -23,6 +23,23 @@ const API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.FROM_EMAIL;
 const FROM_NAME = process.env.FROM_NAME ?? "Elshadai Cake Creations";
 
+/**
+ * Where replies go, when that is not the sending address.
+ *
+ * The two are separate on purpose, and confusing them is the usual reason
+ * business email quietly stops arriving. FROM_EMAIL is an identity, and it has
+ * to be on a domain with the DNS records proving this application may send as
+ * it — a personal Gmail address can never be that, because nobody outside
+ * Google can publish records in gmail.com, and a message claiming to be from
+ * one is a forgery every large provider is built to reject.
+ *
+ * REPLY_TO_EMAIL carries no such requirement. It is only where the customer's
+ * reply is addressed, so it can be any inbox that is actually read. Set it to
+ * a personal address and mail still leaves as the business, while answers
+ * arrive where someone will see them.
+ */
+const REPLY_TO_EMAIL = process.env.REPLY_TO_EMAIL;
+
 export function isEmailConfigured(): boolean {
   return Boolean(API_KEY && FROM_EMAIL);
 }
@@ -106,6 +123,9 @@ export async function sendOrderEmail({
       body: JSON.stringify({
         from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to: [recipient],
+        // Omitted rather than sent empty when unset: Resend rejects a blank
+        // one, and a customer replying should then reach the sending address.
+        ...(REPLY_TO_EMAIL ? { reply_to: REPLY_TO_EMAIL } : {}),
         subject,
         html,
         text,
