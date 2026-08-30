@@ -212,7 +212,14 @@ export function FeaturedCarousel() {
         </div>
 
         {/* ── Exactly three indicators ───────────────────────────────── */}
-        <div className="mt-12 flex items-center gap-3">
+        {/*
+          The dash is the indicator; the button around it is the target.
+
+          An inactive dash is 20px wide, which is below the 24px square a
+          finger needs. The padding widens what can be pressed while the gap is
+          removed to keep the dashes the same distance apart on screen.
+        */}
+        <div className="mt-12 flex items-center">
           {featured.map((item, itemIndex) => {
             const active = itemIndex === index;
             return (
@@ -222,7 +229,7 @@ export function FeaturedCarousel() {
                 onClick={() => goTo(itemIndex)}
                 aria-label={`Show ${item.title}, slide ${itemIndex + 1} of ${count}`}
                 aria-current={active ? "true" : undefined}
-                className="group flex h-8 items-center"
+                className="group flex h-11 items-center px-1.5"
               >
                 <span
                   className="block h-px transition-all duration-500"

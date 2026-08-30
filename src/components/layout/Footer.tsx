@@ -84,12 +84,21 @@ export function Footer() {
           {/* ── Navigation ─────────────────────────────────────────────── */}
           <nav aria-label="Footer">
             <h2 className="eyebrow text-ivory/50">Explore</h2>
-            <ul className="mt-6 space-y-3">
+            {/*
+              The padding is the tap target.
+
+              A line of small text is about 17px tall, and a finger needs at
+              least 24px square to hit it reliably — WCAG 2.2 asks for that as
+              a minimum. The rows are padded and the spacing between them
+              reduced to compensate, so the target grows without the footer
+              stretching.
+            */}
+            <ul className="mt-5 space-y-0.5">
               {navigation.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-sm text-ivory/80 transition-colors hover:text-ivory"
+                    className="inline-block py-1.5 text-sm text-ivory/80 transition-colors hover:text-ivory"
                   >
                     {item.label}
                   </Link>
@@ -99,7 +108,7 @@ export function Footer() {
                 <button
                   type="button"
                   onClick={openContact}
-                  className="text-sm text-ivory/80 transition-colors hover:text-ivory"
+                  className="inline-block py-1.5 text-sm text-ivory/80 transition-colors hover:text-ivory"
                 >
                   Contact
                 </button>
@@ -108,7 +117,7 @@ export function Footer() {
                 <button
                   type="button"
                   onClick={openReview}
-                  className="text-sm text-ivory/80 transition-colors hover:text-ivory"
+                  className="inline-block py-1.5 text-sm text-ivory/80 transition-colors hover:text-ivory"
                 >
                   Leave a Review
                 </button>
@@ -119,12 +128,12 @@ export function Footer() {
           {/* ── Details ────────────────────────────────────────────────── */}
           <div>
             <h2 className="eyebrow text-ivory/50">Get in touch</h2>
-            <ul className="mt-6 space-y-3 text-sm text-ivory/80">
+            <ul className="mt-5 space-y-0.5 text-sm text-ivory/80">
               {details.phones.map((entry) => (
                 <li key={entry.number}>
                   <a
                     href={telHref(entry.number)}
-                    className="transition-colors hover:text-ivory"
+                    className="inline-block py-1.5 transition-colors hover:text-ivory"
                   >
                     {entry.number}
                   </a>
@@ -137,7 +146,7 @@ export function Footer() {
                 <li>
                   <a
                     href={`mailto:${details.email}`}
-                    className="break-all transition-colors hover:text-ivory"
+                    className="inline-block break-all py-1.5 transition-colors hover:text-ivory"
                   >
                     {details.email}
                   </a>
@@ -206,24 +215,24 @@ export function Footer() {
           <p>
             © {year} {business.name}. All rights reserved.
           </p>
-          <ul className="flex flex-wrap gap-x-6 gap-y-2">
+          <ul className="flex flex-wrap gap-x-6">
             <li>
-              <Link href="/terms" className="transition-colors hover:text-ivory/80">
+              <Link href="/terms" className="inline-block py-1.5 transition-colors hover:text-ivory/80">
                 Terms &amp; Conditions
               </Link>
             </li>
             <li>
-              <Link href="/privacy" className="transition-colors hover:text-ivory/80">
+              <Link href="/privacy" className="inline-block py-1.5 transition-colors hover:text-ivory/80">
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link href="/order-policy" className="transition-colors hover:text-ivory/80">
+              <Link href="/order-policy" className="inline-block py-1.5 transition-colors hover:text-ivory/80">
                 Order &amp; Cancellation Policy
               </Link>
             </li>
             <li>
-              <Link href="/cookies" className="transition-colors hover:text-ivory/80">
+              <Link href="/cookies" className="inline-block py-1.5 transition-colors hover:text-ivory/80">
                 Cookie Policy
               </Link>
             </li>
