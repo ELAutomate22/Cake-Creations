@@ -3,27 +3,32 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { query } from "@/lib/d1/client";
 import { sanitiseText } from "@/lib/reviews/sanitise";
 import { calculateQuote } from "@/lib/admin/money";
+import { CAKE_LINE_DESCRIPTION, MAX_CAKE_PRICE_PENCE } from "@/lib/admin/pricing";
 import {
   getItems,
   getOrder,
   getQuotes,
   recordActivity,
+  setCakePrice,
   setStatus,
 } from "@/lib/admin/orders";
 
 /**
  * Creating a quote.
  *
- * A quote is a snapshot. When one is saved it copies the line items and every
+ * A quote is a snapshot. When one is saved it copies the priced line and every
  * total into its own row as JSON, so later edits to the working draft cannot
  * rewrite a figure the customer has already been shown. Versions count up and
  * a sent quote is never edited.
  *
- * Sending is not implemented here on purpose. The quote email carries a "Pay
- * deposit" button, and there is no payment URL until Stripe exists in Phase 3.
- * A quote that arrives with a button leading nowhere is worse than one that
- * has not been sent, so the route saves the version and leaves sending to
- * Phase 3.
+ * Pricing is one figure — the price of the cake — with discount and delivery
+ * as adjustments to it. The route writes that price before doing any
+ * arithmetic, so there is no separate save to forget and no way for the stored
+ * price and the quoted total to disagree.
+ *
+ * The client's numbers are never trusted as totals. It sends the four inputs
+ * and the server recalculates everything from them with the same function the
+ * screen used, so a tampered subtotal cannot become a quote.
  */
 
 export const runtime = "nodejs";
@@ -42,6 +47,7 @@ export async function POST(
   }
 
   let body: {
+    cakePricePence?: number;
     discountPence?: number;
     deliveryFeePence?: number;
     depositPercentage?: number;
@@ -55,19 +61,38 @@ export async function POST(
     return NextResponse.json({ ok: false, message: "Bad request." }, { status: 400 });
   }
 
-  const items = await getItems(id);
-  if (items.length === 0) {
+  /*
+   * The price of the cake.
+   *
+   * Sent with the quote rather than saved separately. When it is absent the
+   * existing stored line is used, which keeps an older order quotable without
+   * being re-priced first.
+   */
+  let cakePricePence: number;
+
+  if (body.cakePricePence === undefined || body.cakePricePence === null) {
+    const existingItems = await getItems(id);
+    cakePricePence = existingItems.reduce((sum, item) => sum + item.amount_pence, 0);
+  } else {
+    cakePricePence = Math.round(Number(body.cakePricePence));
+  }
+
+  if (!Number.isFinite(cakePricePence) || cakePricePence <= 0) {
     return NextResponse.json(
-      { ok: false, message: "Add at least one line item before creating a quote." },
+      { ok: false, message: "Enter the price of the cake before saving a quote." },
+      { status: 422 },
+    );
+  }
+
+  if (cakePricePence > MAX_CAKE_PRICE_PENCE) {
+    return NextResponse.json(
+      { ok: false, message: "That price looks wrong. Check the decimal point." },
       { status: 422 },
     );
   }
 
   const totals = calculateQuote({
-    items: items.map((item) => ({
-      description: item.description,
-      amountPence: item.amount_pence,
-    })),
+    items: [{ description: CAKE_LINE_DESCRIPTION, amountPence: cakePricePence }],
     discountPence: Math.max(0, Math.round(Number(body.discountPence) || 0)),
     deliveryFeePence: Math.max(0, Math.round(Number(body.deliveryFeePence) || 0)),
     depositPercentage: Number(body.depositPercentage ?? 50),
@@ -82,6 +107,10 @@ export async function POST(
   const now = new Date().toISOString();
 
   try {
+    // Written before the quote row, so the stored price and the quote that
+    // was calculated from it can never disagree.
+    await setCakePrice(id, cakePricePence);
+
     await query(
       `INSERT INTO order_quotes (
          id, order_id, version, subtotal_pence, discount_pence, delivery_fee_pence,
@@ -101,13 +130,10 @@ export async function POST(
         totals.remainingBalancePence,
         sanitiseText(String(body.message ?? "")),
         // The frozen copy. This is what makes the version a snapshot rather
-        // than a pointer at rows that can still change underneath it.
-        JSON.stringify(
-          items.map((item) => ({
-            description: item.description,
-            amountPence: item.amount_pence,
-          })),
-        ),
+        // than a pointer at a row that can still change underneath it.
+        JSON.stringify([
+          { description: CAKE_LINE_DESCRIPTION, amountPence: cakePricePence },
+        ]),
         "draft",
         body.depositFixedPence === null || body.depositFixedPence === undefined ? 0 : 1,
         now,

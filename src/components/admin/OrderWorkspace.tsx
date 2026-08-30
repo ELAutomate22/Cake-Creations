@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { EDITABLE_FIELDS, FIELD_LABELS, type OrderStatus } from "@/lib/admin/fields";
+import { CAKE_LINE_DESCRIPTION } from "@/lib/admin/pricing";
 import { calculateQuote, formatPence, formatPounds, parsePence } from "@/lib/admin/money";
 import { DEPOSIT_NOTICE } from "@/lib/email/templates";
 import { StatusBadge } from "./StatusBadge";
@@ -112,10 +113,33 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
 
   const [values, setValues] = useState(props.current);
   const [notes, setNotes] = useState(props.internalNotes);
-  const [items, setItems] = useState<Money[]>(props.items);
-  const [discount, setDiscount] = useState(formatPence(0));
-  const [delivery, setDelivery] = useState(formatPence(0));
-  const [depositPercent, setDepositPercent] = useState(String(props.depositDefault));
+  /*
+   * Pricing starts where it was left.
+   *
+   * The most recent quote is the best record of the figures last used, so the
+   * fields are seeded from it. Without this, reopening an order showed a
+   * discount and delivery of zero next to a saved quote that had both, which
+   * reads as though they had been lost.
+   *
+   * The price falls back to the stored line, summed — an order priced under
+   * the old multi-line editor collapses into the single figure it always
+   * amounted to, rather than appearing to be worth nothing.
+   */
+  const latestQuote = props.quotes[0];
+
+  const [cakePrice, setCakePrice] = useState(() =>
+    formatPence(
+      latestQuote?.subtotalPence ??
+        props.items.reduce((sum, item) => sum + item.amountPence, 0),
+    ),
+  );
+  const [discount, setDiscount] = useState(formatPence(latestQuote?.discountPence ?? 0));
+  const [delivery, setDelivery] = useState(
+    formatPence(latestQuote?.deliveryFeePence ?? 0),
+  );
+  const [depositPercent, setDepositPercent] = useState(
+    String(latestQuote?.depositPercentage ?? props.depositDefault),
+  );
   const [quoteMessage, setQuoteMessage] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: "ok" | "bad"; text: string } | null>(null);
@@ -158,16 +182,24 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
     }
   };
 
-  /** Live totals as the owner types. The same function the server uses. */
+  const cakePricePence = parsePence(cakePrice) ?? 0;
+
+  /**
+   * Live totals as the owner types.
+   *
+   * The same function the server uses, given the same four inputs, so what is
+   * on screen and what is saved cannot drift apart. The screen never sends a
+   * total; the server recalculates it.
+   */
   const totals = useMemo(
     () =>
       calculateQuote({
-        items,
+        items: [{ description: CAKE_LINE_DESCRIPTION, amountPence: cakePricePence }],
         discountPence: parsePence(discount) ?? 0,
         deliveryFeePence: parsePence(delivery) ?? 0,
         depositPercentage: Number(depositPercent) || 0,
       }),
-    [items, discount, delivery, depositPercent],
+    [cakePricePence, discount, delivery, depositPercent],
   );
 
   const openImage = async (imageId: string) => {
@@ -437,94 +469,37 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
 
       {/* ── Pricing ──────────────────────────────────────────────────────── */}
       <Section title="Pricing">
-        <ul className="space-y-2.5">
-          {items.map((item, index) => (
-            <li key={index} className="flex flex-wrap items-center gap-2">
-              <input
-                aria-label={`Item ${index + 1} description`}
-                value={item.description}
-                onChange={(event) => {
-                  const next = [...items];
-                  next[index] = { ...item, description: event.target.value };
-                  setItems(next);
-                }}
-                className={`${control} flex-1 min-w-[12rem]`}
-              />
-              <span className="text-sm text-cocoa-soft">£</span>
-              <input
-                aria-label={`Item ${index + 1} amount in pounds`}
-                inputMode="decimal"
-                value={formatPence(item.amountPence)}
-                onChange={(event) => {
-                  const pence = parsePence(event.target.value);
-                  if (pence === null) return;
-                  const next = [...items];
-                  next[index] = { ...item, amountPence: pence };
-                  setItems(next);
-                }}
-                className={`${control} w-24`}
-              />
-              <button
-                type="button"
-                aria-label={`Move item ${index + 1} up`}
-                disabled={index === 0}
-                onClick={() => {
-                  const next = [...items];
-                  [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                  setItems(next);
-                }}
-                className="px-2 py-2 text-cocoa-soft hover:text-espresso disabled:opacity-30"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                aria-label={`Move item ${index + 1} down`}
-                disabled={index === items.length - 1}
-                onClick={() => {
-                  const next = [...items];
-                  [next[index + 1], next[index]] = [next[index], next[index + 1]];
-                  setItems(next);
-                }}
-                className="px-2 py-2 text-cocoa-soft hover:text-espresso disabled:opacity-30"
-              >
-                ↓
-              </button>
-              <button
-                type="button"
-                aria-label={`Remove item ${index + 1}`}
-                onClick={() => setItems(items.filter((_, i) => i !== index))}
-                className="px-2 py-2 text-danger hover:opacity-70"
-              >
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
+        <p className="text-sm text-cocoa-soft">
+          What the cake costs, then anything taken off and anything added on. The
+          figures below update as you type, and nothing is saved until you save the
+          quote.
+        </p>
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => setItems([...items, { description: "", amountPence: 0 }])}
-            className="btn btn-outline py-2 text-xs"
-          >
-            + Add item
-          </button>
-          <button
-            type="button"
-            disabled={busy !== null}
-            onClick={() =>
-              post(`/api/admin/orders/${props.orderId}/items`, { items }, "items")
-            }
-            className="btn btn-solid py-2 text-xs disabled:opacity-50"
-          >
-            {busy === "items" ? "Saving…" : "Save line items"}
-          </button>
-        </div>
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label htmlFor="discount" className="text-[0.625rem] uppercase tracking-[0.16em] text-cocoa-soft">
+            <label
+              htmlFor="cake-price"
+              className="text-[0.625rem] uppercase tracking-[0.16em] text-cocoa-soft"
+            >
+              Price of the cake (£)
+            </label>
+            <input
+              id="cake-price"
+              inputMode="decimal"
+              value={cakePrice}
+              onChange={(event) => setCakePrice(event.target.value)}
+              className={`${control} mt-1.5`}
+            />
+            <p className="mt-1 text-xs text-cocoa-soft">
+              The whole cake, as one price.
+            </p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="discount"
+              className="text-[0.625rem] uppercase tracking-[0.16em] text-cocoa-soft"
+            >
               Discount (£)
             </label>
             <input
@@ -534,9 +509,16 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
               onChange={(event) => setDiscount(event.target.value)}
               className={`${control} mt-1.5`}
             />
+            <p className="mt-1 text-xs text-cocoa-soft">
+              Never more than the price of the cake.
+            </p>
           </div>
+
           <div>
-            <label htmlFor="delivery" className="text-[0.625rem] uppercase tracking-[0.16em] text-cocoa-soft">
+            <label
+              htmlFor="delivery"
+              className="text-[0.625rem] uppercase tracking-[0.16em] text-cocoa-soft"
+            >
               Delivery (£)
             </label>
             <input
@@ -547,11 +529,15 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
               className={`${control} mt-1.5`}
             />
             <p className="mt-1 text-xs text-cocoa-soft">
-              Charged here, not as a line item, so it cannot be counted twice.
+              Added after the discount.
             </p>
           </div>
+
           <div>
-            <label htmlFor="deposit" className="text-[0.625rem] uppercase tracking-[0.16em] text-cocoa-soft">
+            <label
+              htmlFor="deposit"
+              className="text-[0.625rem] uppercase tracking-[0.16em] text-cocoa-soft"
+            >
               Deposit (%)
             </label>
             <input
@@ -561,20 +547,35 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
               onChange={(event) => setDepositPercent(event.target.value)}
               className={`${control} mt-1.5`}
             />
+            <p className="mt-1 text-xs text-cocoa-soft">
+              Taken from the total.
+            </p>
           </div>
         </div>
 
+        {cakePricePence <= 0 && (
+          <p className="mt-4 text-sm text-cocoa-soft">
+            Enter a price to see the totals.
+          </p>
+        )}
+
         <dl className="mt-6 border-t border-espresso/15 pt-4 text-sm">
-          {[
-            ["Subtotal", totals.subtotalPence],
-            ["Discount", -totals.discountPence],
-            ["Delivery", totals.deliveryFeePence],
-          ].map(([label, pence]) => (
-            <div key={label as string} className="flex justify-between py-1">
-              <dt className="text-cocoa-soft">{label}</dt>
-              <dd className="text-cocoa">{formatPounds(pence as number)}</dd>
+          <div className="flex justify-between py-1">
+            <dt className="text-cocoa-soft">Subtotal</dt>
+            <dd className="text-cocoa">{formatPounds(totals.subtotalPence)}</dd>
+          </div>
+          {totals.discountPence > 0 && (
+            <div className="flex justify-between py-1">
+              <dt className="text-cocoa-soft">Discount</dt>
+              <dd className="text-cocoa">−{formatPounds(totals.discountPence)}</dd>
             </div>
-          ))}
+          )}
+          {totals.deliveryFeePence > 0 && (
+            <div className="flex justify-between py-1">
+              <dt className="text-cocoa-soft">Delivery</dt>
+              <dd className="text-cocoa">{formatPounds(totals.deliveryFeePence)}</dd>
+            </div>
+          )}
           <div className="mt-1 flex justify-between border-t border-espresso/20 py-2">
             <dt className="text-espresso">Total</dt>
             <dd className="font-serif text-lg text-espresso">
@@ -616,11 +617,12 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
           </button>
           <button
             type="button"
-            disabled={busy !== null || items.length === 0}
+            disabled={busy !== null || cakePricePence <= 0}
             onClick={() =>
               post(
                 `/api/admin/orders/${props.orderId}/quote`,
                 {
+                  cakePricePence,
                   discountPence: parsePence(discount) ?? 0,
                   deliveryFeePence: parsePence(delivery) ?? 0,
                   depositPercentage: Number(depositPercent) || 0,
@@ -707,14 +709,29 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
               ))}
             </dl>
 
-            <ul className="mt-4 border-t border-espresso/10 pt-3 text-sm">
-              {items.map((item, index) => (
-                <li key={index} className="flex justify-between py-1">
-                  <span className="text-cocoa">{item.description || "—"}</span>
-                  <span className="text-cocoa">{formatPounds(item.amountPence)}</span>
-                </li>
-              ))}
-            </ul>
+            {/*
+              The same rows, in the same order, as the page the customer opens.
+              A preview that summarises differently is a preview of something
+              else.
+            */}
+            <dl className="mt-4 border-t border-espresso/10 pt-3 text-sm">
+              <div className="flex justify-between py-0.5">
+                <dt className="text-cocoa">{CAKE_LINE_DESCRIPTION}</dt>
+                <dd className="text-cocoa">{formatPounds(totals.subtotalPence)}</dd>
+              </div>
+              {totals.discountPence > 0 && (
+                <div className="flex justify-between py-0.5">
+                  <dt className="text-cocoa">Discount</dt>
+                  <dd className="text-cocoa">−{formatPounds(totals.discountPence)}</dd>
+                </div>
+              )}
+              {totals.deliveryFeePence > 0 && (
+                <div className="flex justify-between py-0.5">
+                  <dt className="text-cocoa">Delivery</dt>
+                  <dd className="text-cocoa">{formatPounds(totals.deliveryFeePence)}</dd>
+                </div>
+              )}
+            </dl>
 
             <dl className="mt-2 border-t border-espresso/20 pt-2 text-sm">
               <div className="flex justify-between py-0.5">

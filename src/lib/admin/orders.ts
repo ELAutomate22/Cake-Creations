@@ -1,5 +1,8 @@
 import "server-only";
 import { query } from "@/lib/d1/client";
+import { CAKE_LINE_DESCRIPTION } from "./pricing";
+
+export { CAKE_LINE_DESCRIPTION };
 
 /**
  * Reading and changing orders, for the owner.
@@ -245,6 +248,27 @@ export async function getItems(orderId: string) {
     [orderId],
   );
   return rows;
+}
+
+/**
+ * Sets the price of the cake, replacing whatever was there.
+ *
+ * Replacing rather than updating is deliberate: an order priced under the old
+ * multi-line editor may still have several rows, and leaving any of them
+ * behind would quietly add to the subtotal. One order has one price.
+ */
+export async function setCakePrice(
+  orderId: string,
+  amountPence: number,
+): Promise<void> {
+  const now = new Date().toISOString();
+
+  await query(`DELETE FROM order_items WHERE order_id = ?`, [orderId]);
+  await query(
+    `INSERT INTO order_items (id, order_id, description, amount_pence, sort_order, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?)`,
+    [crypto.randomUUID(), orderId, CAKE_LINE_DESCRIPTION, amountPence, 0, now, now],
+  );
 }
 
 export async function getQuotes(orderId: string) {
