@@ -1,58 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { occasions } from "@/content/site";
-import { CakeTurntable } from "./CakeTurntable";
-import { gsap, isTouch, prefersReducedMotion, ScrollTrigger } from "@/lib/motion";
-import { useReducedMotion } from "@/hooks/useMediaQuery";
+import { gsap, isTouch, prefersReducedMotion } from "@/lib/motion";
 
 /**
- * Cake occasions, told against a turning cake.
+ * The occasions a cake can be made for, as a list that writes itself.
  *
- * A three-dimensional cake is held in place while the occasion names travel
- * past it, each one filling in from the left as it arrives. The cake turns in
- * step with the scroll, so the movement belongs to the visitor's own gesture
- * rather than playing at them.
+ * Each name is set twice: a pale copy, and the full-strength one clipped over
+ * it. Scrolling wipes the second across the first, so a name fills in from the
+ * left as it arrives. The movement is tied to the scroll rather than to a
+ * clock, which means it belongs to the visitor's own gesture instead of
+ * playing at them.
  *
- * The cake is photography, not a model. Twenty-eight frames of one real cake
- * on a turntable, cut out and aligned, played against the scroll. It replaced
- * a procedural 3D cake, which needed WebGL, a fallback for when WebGL was
- * missing, and a second fallback for when the context was lost. Images need
- * none of that, and they show the cake somebody would actually receive.
+ * There is deliberately no image here. The section has carried a 3D cake and
+ * then a photographed one, and both competed with the list rather than
+ * supporting it. The names are the content.
  */
 
 export function Occasions() {
   const rootRef = useRef<HTMLElement>(null);
-  const progress = useRef(0);
-
-  const [active, setActive] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-
-  const reduced = useReducedMotion();
-
-  /*
-   * Mount the canvas only once the section is near, and stop drawing entirely
-   * once it has gone by.
-   *
-   * An IntersectionObserver rather than a ScrollTrigger: ScrollTrigger's
-   * onToggle only fires on a change, so a visitor who lands directly on this
-   * section — a deep link, or a reload part-way down the page — would never
-   * see it fire and the cake would never appear. An observer reports the
-   * current state as soon as it starts watching.
-   */
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setActive(entry.isIntersecting),
-      { rootMargin: "60% 0px 20% 0px" },
-    );
-
-    observer.observe(root);
-    return () => observer.disconnect();
-  }, []);
 
   useGSAP(
     () => {
@@ -60,17 +29,6 @@ export function Occasions() {
       if (!root) return;
 
       if (prefersReducedMotion()) return;
-
-      // Scroll position is written straight into a ref. Nothing re-renders.
-      ScrollTrigger.create({
-        trigger: root,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: true,
-        onUpdate: (self) => {
-          progress.current = self.progress;
-        },
-      });
 
       // Each occasion fills in from the left as it crosses the middle of the
       // screen — the same idea as a wipe, tied to scroll rather than time.
@@ -111,32 +69,8 @@ export function Occasions() {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-10 lg:mt-20 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
-          {/* ── The cake, held in place ──────────────────────────────── */}
-          <div className="lg:sticky lg:top-24 lg:h-[calc(100dvh-12rem)]">
-            <div className="relative mx-auto h-[52vh] w-full max-w-md sm:h-[58vh] lg:h-full lg:max-w-none">
-              {(
-                /*
-                  Photographs of the real cake, not a drawn one.
-
-                  Twenty-eight frames of a single cake on a turntable, turning
-                  with the scroll. This replaced a procedural 3D cake: a
-                  three-dimensional model of a cake is a drawing of a cake, and
-                  a customer deciding whether to order one is better served by
-                  the thing itself.
-                */
-                <CakeTurntable
-                  progress={progress}
-                  active={active}
-                  reducedMotion={reduced}
-                  alt={occasions.turntableAlt}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* ── The occasions ────────────────────────────────────────── */}
-          <ul className="lg:pt-10">
+        {/* ── The occasions ──────────────────────────────────────────── */}
+        <ul className="mt-14 lg:mt-20">
             {occasions.items.map((item) => {
               const isActive = item.id === activeId;
               return (
@@ -182,9 +116,8 @@ export function Occasions() {
                   </button>
                 </li>
               );
-            })}
-          </ul>
-        </div>
+          })}
+        </ul>
       </div>
     </section>
   );
