@@ -55,7 +55,7 @@ export const business = {
   serviceArea: "[SERVICE AREA]",
 
   /** Public web address once the domain is live. Used for SEO links. */
-  url: "https://www.elshadaicakecreations.co.uk",
+  url: "https://elshadaicakecreations.co.uk",
 } as const;
 
 /**

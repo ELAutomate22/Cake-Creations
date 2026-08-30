@@ -29,7 +29,7 @@ same values in `.env.local` for local development. Scope them to all contexts.
 | `ADMIN_SESSION_SECRET` | Signs the admin session cookie |
 | `STRIPE_SECRET_KEY` | Stripe secret key. Test key first |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for the webhook endpoint |
-| `APP_BASE_URL` | `https://elshadai-cake-creations.netlify.app`, or the live domain |
+| `APP_BASE_URL` | `https://elshadaicakecreations.co.uk` |
 | `CRON_SECRET` | Any long random string; protects the cleanup endpoint |
 | `RESEND_API_KEY` | Resend API key |
 | `FROM_EMAIL` | Sending address on a domain verified in Resend |
@@ -54,7 +54,7 @@ runs in the page.
 2. **Developers → API keys** → copy the **Secret key** (`sk_test_…`) into
    `STRIPE_SECRET_KEY`.
 3. **Developers → Webhooks → Add endpoint**
-   - URL: `https://YOUR-DOMAIN/api/stripe/webhook`
+   - URL: `https://elshadaicakecreations.co.uk/api/stripe/webhook`
    - Events: **`checkout.session.completed`** only. Nothing else is used, and
      subscribing to more means handling events that have no code behind them.
 4. Copy the **Signing secret** (`whsec_…`) into `STRIPE_WEBHOOK_SECRET`.
@@ -106,7 +106,7 @@ Check it after a deploy under **Netlify → Functions → purge**, or run it by
 hand:
 
 ```bash
-curl -X POST https://YOUR-DOMAIN/api/cron/purge -H "x-cron-secret: YOUR_CRON_SECRET"
+curl -X POST https://elshadaicakecreations.co.uk/api/cron/purge -H "x-cron-secret: YOUR_CRON_SECRET"
 ```
 
 It answers with counts only.

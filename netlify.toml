@@ -1,0 +1,23 @@
+# Netlify build configuration.
+#
+# This lives in the repository on purpose. These settings were previously held
+# only in the Netlify UI, and when they were cleared every deploy quietly
+# published the repository root instead of the built site: each deploy reported
+# "ready" while every URL returned 404. A file in git cannot be cleared by
+# accident, and it overrides the UI.
+
+[build]
+  command = "npm run build"
+  # The Next.js runtime reads the build output from here and turns the server
+  # routes into functions. It is not a folder of static files to serve.
+  publish = ".next"
+
+[build.environment]
+  # Next 16 requires Node 20 or newer. Pinned so a change to Netlify's default
+  # image cannot move it underneath us.
+  NODE_VERSION = "22"
+
+# Declared explicitly rather than relying on framework auto-detection, which is
+# what stopped working here.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
