@@ -39,7 +39,13 @@ export async function getSettings(): Promise<Settings> {
   );
 
   const settings: Settings = {};
-  for (const row of rows) settings[row.key] = row.value;
+  // Filtered to the known keys. The table also holds internal machinery — the
+  // marker admin sessions are signed against — which is not a setting and has
+  // no business being handed to a form or returned by the settings API.
+  const allowed = new Set<string>(SETTING_KEYS);
+  for (const row of rows) {
+    if (allowed.has(row.key)) settings[row.key] = row.value;
+  }
   return settings;
 }
 

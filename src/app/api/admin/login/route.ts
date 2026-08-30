@@ -83,7 +83,7 @@ export async function POST(request: Request) {
   attempts.delete(key);
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(SESSION_COOKIE, createSessionToken(), {
+  response.cookies.set(SESSION_COOKIE, await createSessionToken(), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

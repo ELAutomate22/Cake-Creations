@@ -1,6 +1,8 @@
 import "server-only";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
+import { query } from "@/lib/d1/client";
 
 /**
  * Admin sessions.
@@ -18,10 +20,91 @@ import { cookies } from "next/headers";
  * Both comparisons are timing-safe. A plain `===` on a secret leaks how much
  * of a guess was correct through how long the comparison took, which is enough
  * to recover a value one character at a time.
+ *
+ * Signing out ends every session, everywhere.
+ *
+ * A signed token needs no server record to be valid, which is what makes it
+ * cheap — and it is also why clearing the browser's cookie is not, on its own,
+ * signing out: a copy of that cookie taken beforehand stays valid until it
+ * expires. The fix is one row, not a table of sessions. Every token carries
+ * the current value of a single marker, and signing out changes it, which
+ * invalidates every token ever issued in one write. Storage does not grow with
+ * use: there is exactly one row whatever happens.
+ *
+ * For a business run by one person that is the behaviour you want anyway —
+ * signing out means signed out, not signed out here.
  */
 
 const COOKIE = "elshadai_admin";
 const SESSION_HOURS = 12;
+
+/** The single settings row every session is measured against. */
+const EPOCH_KEY = "admin_session_epoch";
+
+/**
+ * The last marker this instance managed to read.
+ *
+ * If the database cannot be reached, this is used rather than refusing the
+ * request. Locking the owner out of their own admin during a network blip is
+ * a worse failure than briefly honouring a session that was signed out, and
+ * the signature and the expiry are still checked either way.
+ */
+let lastKnownEpoch: string | null = null;
+
+async function readEpoch(): Promise<string> {
+  const { rows } = await query<{ value: string }>(
+    `SELECT value FROM settings WHERE key = ?`,
+    [EPOCH_KEY],
+  );
+  // No row yet means no one has ever signed out. "0" is a real value, not a
+  // failure, and tokens are minted against it quite happily.
+  return rows[0]?.value ?? "0";
+}
+
+/*
+ * Read once per request, and not cached beyond it.
+ *
+ * A cache with a lifetime would make signing out take effect "soon", which is
+ * not a property a sign-out may have: for the length of the window a cookie
+ * that was signed out still works, and whether it does depends on which
+ * instance answers. React's `cache` deduplicates within a single request, so a
+ * page that checks access several times still costs one read, and the answer
+ * is never stale.
+ *
+ * One small indexed read per admin request is a price worth paying. Nothing
+ * else in the admin is on this path, and an order page already makes nine
+ * queries to render.
+ */
+const readEpochOnce = cache(readEpoch);
+
+async function currentEpoch(): Promise<string> {
+  try {
+    const epoch = await readEpochOnce();
+    lastKnownEpoch = epoch;
+    return epoch;
+  } catch (error) {
+    console.error("Could not read the session marker; using the last known one.", error);
+    return lastKnownEpoch ?? "0";
+  }
+}
+
+/**
+ * Ends every admin session.
+ *
+ * One write. Every token issued before this moment stops verifying, on every
+ * device, because the marker they carry no longer matches.
+ */
+export async function endAllSessions(): Promise<void> {
+  const next = randomBytes(8).toString("hex");
+
+  await query(
+    `INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    [EPOCH_KEY, next, new Date().toISOString()],
+  );
+
+  lastKnownEpoch = next;
+}
 
 const PASSWORD = process.env.ADMIN_PASSWORD;
 const SECRET = process.env.ADMIN_SESSION_SECRET;
@@ -53,29 +136,41 @@ export function passwordMatches(candidate: string): boolean {
   return equals(candidate, PASSWORD as string);
 }
 
-/** A signed session value: expiry, a nonce, and a signature over both. */
-export function createSessionToken(): string {
+/**
+ * A signed session value: expiry, a nonce, the session marker, and a signature
+ * over all three.
+ *
+ * The marker is inside the signed payload rather than beside it, so it cannot
+ * be edited to revive a token that signing out has already killed.
+ */
+export async function createSessionToken(): Promise<string> {
   const expires = Date.now() + SESSION_HOURS * 60 * 60 * 1000;
   // The nonce makes two sessions issued in the same millisecond differ, so a
   // token is never a predictable function of the clock alone.
-  const payload = `${expires}.${randomBytes(12).toString("hex")}`;
+  const payload = `${expires}.${randomBytes(12).toString("hex")}.${await currentEpoch()}`;
   return `${payload}.${sign(payload)}`;
 }
 
-/** Whether a session value is genuine and still current. */
-export function verifySessionToken(token: string | undefined): boolean {
+/** Whether a session value is genuine, still current, and not signed out. */
+export async function verifySessionToken(token: string | undefined): Promise<boolean> {
   if (!token || !isAdminConfigured()) return false;
 
   const parts = token.split(".");
-  if (parts.length !== 3) return false;
+  // Three parts is a token from before sign-out ended sessions everywhere.
+  // Those are not honoured: it cannot be shown they were not signed out.
+  if (parts.length !== 4) return false;
 
-  const [expires, nonce, signature] = parts;
-  const payload = `${expires}.${nonce}`;
+  const [expires, nonce, epoch, signature] = parts;
+  const payload = `${expires}.${nonce}.${epoch}`;
 
   if (!equals(signature, sign(payload))) return false;
 
   const expiry = Number(expires);
-  return Number.isFinite(expiry) && expiry > Date.now();
+  if (!Number.isFinite(expiry) || expiry <= Date.now()) return false;
+
+  // The marker is not a secret — it is a version number — so a plain
+  // comparison is right here. Nothing is learned from how long it takes.
+  return epoch === (await currentEpoch());
 }
 
 export const SESSION_COOKIE = COOKIE;
@@ -89,7 +184,7 @@ export const SESSION_MAX_AGE = SESSION_HOURS * 60 * 60;
  */
 export async function isAdminRequest(): Promise<boolean> {
   const store = await cookies();
-  return verifySessionToken(store.get(COOKIE)?.value);
+  return await verifySessionToken(store.get(COOKIE)?.value);
 }
 
 /**
