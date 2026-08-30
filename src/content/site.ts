@@ -378,6 +378,18 @@ export const occasions = {
   standfirst:
     "Personalised or classic, a cake can be created for any of the occasions below.",
 
+  /**
+   * What the turning cake beside the list is, for anyone who cannot see it.
+   *
+   * One description for the whole sequence: it is a single cake photographed
+   * from twenty-eight angles, so describing each frame would repeat the same
+   * sentence twenty-eight times to a screen reader.
+   */
+  turntableAlt:
+    "An ivory celebration cake wrapped in wafer-paper ruffles, topped with " +
+    "gold and white baubles and gilded palm fans, turning slowly to show " +
+    "every side.",
+
   items: [
     { id: "birthday", label: "Birthday cakes", image: { src: "", alt: "[CAKE DESCRIPTION]" } },
     { id: "wedding", label: "Wedding cakes", image: { src: "", alt: "[CAKE DESCRIPTION]" } },

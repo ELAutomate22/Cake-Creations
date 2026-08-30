@@ -1,10 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { occasions } from "@/content/site";
-import { CakeImage } from "@/components/ui/CakeImage";
+import { CakeTurntable } from "./CakeTurntable";
 import { gsap, isTouch, prefersReducedMotion, ScrollTrigger } from "@/lib/motion";
 import { useReducedMotion } from "@/hooks/useMediaQuery";
 
@@ -16,46 +15,21 @@ import { useReducedMotion } from "@/hooks/useMediaQuery";
  * step with the scroll, so the movement belongs to the visitor's own gesture
  * rather than playing at them.
  *
- * The 3D is additive, never load-bearing. It is loaded only in the browser and
- * only when the section is near, and if WebGL is unavailable or the context is
- * lost the section falls back to photography — or, when there is none yet, to a
- * plain readable list. The occasions are legible in every one of those states.
+ * The cake is photography, not a model. Twenty-eight frames of one real cake
+ * on a turntable, cut out and aligned, played against the scroll. It replaced
+ * a procedural 3D cake, which needed WebGL, a fallback for when WebGL was
+ * missing, and a second fallback for when the context was lost. Images need
+ * none of that, and they show the cake somebody would actually receive.
  */
-
-const CakeCanvas = dynamic(() => import("@/components/three/CakeCanvas"), {
-  ssr: false,
-  loading: () => <CakePlaceholder />,
-});
-
-/** Shown while the canvas chunk is still arriving. */
-function CakePlaceholder() {
-  return (
-    <div
-      aria-hidden="true"
-      className="flex h-full w-full items-center justify-center"
-    >
-      <div className="h-24 w-24 rounded-full bg-champagne/40 blur-2xl" />
-    </div>
-  );
-}
 
 export function Occasions() {
   const rootRef = useRef<HTMLElement>(null);
   const progress = useRef(0);
 
   const [active, setActive] = useState(false);
-  const [failed, setFailed] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const reduced = useReducedMotion();
-
-  // Occasions with real photography can still drive an image panel.
-  const withImages = useMemo(
-    () => occasions.items.filter((item) => Boolean(item.image.src)),
-    [],
-  );
-
-  const onError = useCallback(() => setFailed(true), []);
 
   /*
    * Mount the canvas only once the section is near, and stop drawing entirely
@@ -121,9 +95,6 @@ export function Occasions() {
     { scope: rootRef },
   );
 
-  const showCanvas = active && !failed;
-  const hasImagery = withImages.length > 0;
-
   return (
     <section
       ref={rootRef}
@@ -144,31 +115,22 @@ export function Occasions() {
           {/* ── The cake, held in place ──────────────────────────────── */}
           <div className="lg:sticky lg:top-24 lg:h-[calc(100dvh-12rem)]">
             <div className="relative mx-auto h-[52vh] w-full max-w-md sm:h-[58vh] lg:h-full lg:max-w-none">
-              {failed && hasImagery ? (
-                // WebGL gone: photography carries the section instead.
-                <CakeImage
-                  src={withImages[0].image.src}
-                  alt={withImages[0].image.alt}
-                  label={`${withImages[0].label} photograph`}
-                  className="h-full w-full"
-                  sizes="(min-width: 1024px) 44vw, 92vw"
-                />
-              ) : failed ? (
-                <div className="flex h-full w-full items-center justify-center">
-                  <div
-                    aria-hidden="true"
-                    className="h-40 w-40 rounded-full bg-gradient-to-br from-champagne to-vanilla blur-[2px]"
-                  />
-                </div>
-              ) : showCanvas ? (
-                <CakeCanvas
+              {(
+                /*
+                  Photographs of the real cake, not a drawn one.
+
+                  Twenty-eight frames of a single cake on a turntable, turning
+                  with the scroll. This replaced a procedural 3D cake: a
+                  three-dimensional model of a cake is a drawing of a cake, and
+                  a customer deciding whether to order one is better served by
+                  the thing itself.
+                */
+                <CakeTurntable
                   progress={progress}
                   active={active}
                   reducedMotion={reduced}
-                  onError={onError}
+                  alt={occasions.turntableAlt}
                 />
-              ) : (
-                <CakePlaceholder />
               )}
             </div>
           </div>
