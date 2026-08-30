@@ -59,6 +59,12 @@
   --color-champagne: #ebdfcd;
   --color-caramel: #c9a882;
 
+  /* The gold of the logo, deepened just enough to be readable as text.
+     Sampled from the monogram, whose dominant tone is #b58b48; that manages
+     only 2.9:1 against the ivory, and this clears the 3:1 that large text
+     needs. The lighter golds in the mark are for artwork, not for words. */
+  --color-gold: #a8813f;
+
   /* ── Ink ──────────────────────────────────────────────────────────────── */
   --color-espresso: #2a1d17;
   --color-cocoa: #4a352b;

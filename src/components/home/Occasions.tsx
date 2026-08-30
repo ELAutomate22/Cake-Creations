@@ -14,6 +14,9 @@ import { gsap, isTouch, prefersReducedMotion } from "@/lib/motion";
  * clock, which means it belongs to the visitor's own gesture instead of
  * playing at them.
  *
+ * The wipe is written in ink going down the page and in gold coming back up,
+ * so the direction of travel has its own colour.
+ *
  * There is deliberately no image here. The section has carried a 3D cake and
  * then a photographed one, and both competed with the list rather than
  * supporting it. The names are the content.
@@ -34,6 +37,20 @@ export function Occasions() {
       // screen — the same idea as a wipe, tied to scroll rather than time.
       const names = gsap.utils.toArray<HTMLElement>("[data-occasion-fill]", root);
       for (const name of names) {
+        /*
+         * The colour follows the direction of travel: ink going down, gold
+         * coming back up.
+         *
+         * Written straight to the element rather than tweened. It is a change
+         * of state, not a transition — the colour belongs to which way the
+         * visitor is going, and interpolating between the two would put a
+         * muddy brown in the middle of every reversal.
+         *
+         * The last direction is remembered so the style is only touched when
+         * it actually changes, rather than on every frame of the scrub.
+         */
+        let painted = 0;
+
         gsap.fromTo(
           name,
           { clipPath: "inset(0 100% 0 0)" },
@@ -45,6 +62,14 @@ export function Occasions() {
               start: "top 82%",
               end: "top 45%",
               scrub: true,
+              onUpdate: (self) => {
+                if (self.direction === painted) return;
+                painted = self.direction;
+                name.style.color =
+                  self.direction === -1
+                    ? "var(--color-gold)"
+                    : "var(--color-espresso)";
+              },
             },
           },
         );
