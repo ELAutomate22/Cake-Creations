@@ -113,32 +113,24 @@ const control =
   "w-full border border-espresso/20 bg-ivory px-3 py-2.5 text-sm text-cocoa outline-none focus:border-espresso";
 
 /**
- * What to ask before deleting a quote.
+ * Whether a quote is inside the fortnight after it was settled in full.
  *
- * Outside the component on purpose. It reads the clock, and anything inside a
- * component that reads the clock is render code as far as the linter is
- * concerned — rightly, since a render that reads the clock gives a different
- * answer every time it runs. This is only ever called from a click, which is
- * also the moment the answer needs to be current.
+ * This is the only case that gets asked about. A quote paid a fortnight ago or
+ * less is the one worth stopping on: the customer can still query the charge,
+ * and this row is the record of what they agreed to pay. Anything else — an
+ * older settled quote, a superseded draft, one never paid at all — deletes on
+ * the press, because a confirmation shown for everything is a confirmation
+ * nobody reads by the third time.
  *
- * The wording follows the facts. A quote settled within the last fortnight is
- * the dangerous one — a customer can still query the charge, and this is the
- * record of what they agreed to pay — so that case is named explicitly. The
- * others get an accurate sentence rather than a borrowed warning about a
- * payment that never happened.
+ * Outside the component because it reads the clock, which is render-impure and
+ * rightly refused there. It is only ever called from a click, which is also
+ * when the answer needs to be current.
  */
-function deletionQuestion(quote: Quote): string {
-  const paidAt = quote.paidInFullAt;
-  if (!paidAt) {
-    return "This quote has not been paid in full. Are you sure you want to permanently delete it?";
-  }
+const SETTLED_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
-  const fortnight = 14 * 24 * 60 * 60 * 1000;
-  if (Date.now() - new Date(paidAt).getTime() < fortnight) {
-    return "There have not been two weeks since this quote has been fully paid. Are you sure you want to permanently delete it?";
-  }
-
-  return `This quote was paid in full on ${paidAt.slice(0, 10)}. Are you sure you want to permanently delete it?`;
+function isRecentlySettled(quote: Quote): boolean {
+  if (!quote.paidInFullAt) return false;
+  return Date.now() - new Date(quote.paidInFullAt).getTime() < SETTLED_WINDOW_MS;
 }
 
 export function OrderWorkspace(props: OrderWorkspaceProps) {
@@ -184,9 +176,7 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
   const [declineReason, setDeclineReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [showPreview, setShowPreview] = useState(false);
-  const [quoteToDelete, setQuoteToDelete] = useState<
-    { quote: Quote; question: string } | null
-  >(null);
+  const [quoteToDelete, setQuoteToDelete] = useState<Quote | null>(null);
 
   const post = async (url: string, body: unknown, label: string) => {
     setBusy(label);
@@ -237,6 +227,27 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
       }),
     [cakePricePence, discount, delivery, depositPercent],
   );
+
+  const deleteQuote = (quote: Quote) =>
+    post(
+      `/api/admin/orders/${props.orderId}/quote/delete`,
+      { quoteId: quote.id },
+      `delete-quote-${quote.id}`,
+    );
+
+  /**
+   * Delete, asking first only where it is worth asking.
+   *
+   * A quote settled within the last fortnight opens the dialog. Everything
+   * else goes on the press.
+   */
+  const requestQuoteDeletion = (quote: Quote) => {
+    if (isRecentlySettled(quote)) {
+      setQuoteToDelete(quote);
+      return;
+    }
+    void deleteQuote(quote);
+  };
 
   const openImage = async (imageId: string) => {
     const response = await fetch(
@@ -801,16 +812,6 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
                   <span className="text-espresso">
                     Quote v{quote.version} — {formatPounds(quote.totalPence)}
                   </span>
-                  <button
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={() =>
-                      setQuoteToDelete({ quote, question: deletionQuestion(quote) })
-                    }
-                    className="text-[0.625rem] uppercase tracking-[0.14em] text-danger hover:opacity-70 disabled:opacity-40"
-                  >
-                    Delete
-                  </button>
                   <span className="text-xs text-cocoa-soft">
                     {quote.sentAt
                       ? `Sent ${quote.sentAt.slice(0, 16).replace("T", " ")}`
@@ -831,6 +832,29 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
                     ))}
                   </ul>
                 )}
+
+                {/*
+                  At the foot of the version it belongs to, and looking like a
+                  button rather than a word.
+
+                  It was first written as a small line of text between the
+                  version number and the date, which is where the eye goes
+                  last. A destructive action nobody can find is not a safe
+                  one — it is one that gets clicked by accident while looking
+                  for it.
+                */}
+                <div className="mt-4 flex justify-end border-t border-espresso/10 pt-3">
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => requestQuoteDeletion(quote)}
+                    className="btn btn-outline border-danger/40 px-4 py-2 text-xs text-danger disabled:opacity-40"
+                  >
+                    {busy === `delete-quote-${quote.id}`
+                      ? "Deleting…"
+                      : `Delete quote v${quote.version}`}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -1116,10 +1140,13 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
         {quoteToDelete && (
           <div className="p-7 sm:p-8">
             <h2 className="font-serif text-xl text-espresso">
-              Delete quote v{quoteToDelete.quote.version}?
+              Delete quote v{quoteToDelete.version}?
             </h2>
 
-            <p className="mt-4 text-sm text-cocoa">{quoteToDelete.question}</p>
+            <p className="mt-4 text-sm text-cocoa">
+              There have not been two weeks since this quote has been fully
+              paid. Are you sure you want to permanently delete it?
+            </p>
 
             <p className="mt-4 border-l-2 border-caramel bg-vanilla px-4 py-3 text-xs text-espresso">
               Any payment taken against it is kept, with its amount and Stripe
@@ -1139,17 +1166,12 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
                 type="button"
                 disabled={busy !== null}
                 onClick={async () => {
-                  const target = quoteToDelete.quote;
-                  const done = await post(
-                    `/api/admin/orders/${props.orderId}/quote/delete`,
-                    { quoteId: target.id },
-                    `delete-quote-${target.id}`,
-                  );
+                  const done = await deleteQuote(quoteToDelete);
                   if (done) setQuoteToDelete(null);
                 }}
                 className="btn btn-solid border-danger bg-danger py-2.5 text-xs text-ivory disabled:opacity-50"
               >
-                {busy === `delete-quote-${quoteToDelete.quote.id}` ? "Deleting…" : "Delete"}
+                {busy === `delete-quote-${quoteToDelete.id}` ? "Deleting…" : "Delete"}
               </button>
             </div>
           </div>
