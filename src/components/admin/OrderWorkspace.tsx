@@ -25,9 +25,6 @@ import { Modal } from "@/components/ui/Modal";
 type Money = { description: string; amountPence: number };
 
 type Quote = {
-  id: string;
-  /** When this quote was settled in full, or null if it was not. */
-  paidInFullAt: string | null;
   version: number;
   status: string;
   subtotalPence: number;
@@ -84,6 +81,8 @@ export type OrderWorkspaceProps = {
     outstandingPence: number;
     hasPaidDeposit: boolean;
   };
+  /** When the order was settled in full, or null. Decides whether deleting asks. */
+  paidInFullAt: string | null;
   stripeReady: boolean;
   stripeTestMode: boolean;
   emailReady: boolean;
@@ -113,14 +112,12 @@ const control =
   "w-full border border-espresso/20 bg-ivory px-3 py-2.5 text-sm text-cocoa outline-none focus:border-espresso";
 
 /**
- * Whether a quote is inside the fortnight after it was settled in full.
+ * Whether an order was settled in full within the last fortnight.
  *
- * This is the only case that gets asked about. A quote paid a fortnight ago or
- * less is the one worth stopping on: the customer can still query the charge,
- * and this row is the record of what they agreed to pay. Anything else — an
- * older settled quote, a superseded draft, one never paid at all — deletes on
- * the press, because a confirmation shown for everything is a confirmation
- * nobody reads by the third time.
+ * The only case that stops to ask before deleting. Inside that window the
+ * customer can still query the charge, and this order is the business's record
+ * of what they agreed to pay — so it is worth a moment's pause. Outside it, and
+ * on an order never paid at all, the button does what it says.
  *
  * Outside the component because it reads the clock, which is render-impure and
  * rightly refused there. It is only ever called from a click, which is also
@@ -128,9 +125,9 @@ const control =
  */
 const SETTLED_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
-function isRecentlySettled(quote: Quote): boolean {
-  if (!quote.paidInFullAt) return false;
-  return Date.now() - new Date(quote.paidInFullAt).getTime() < SETTLED_WINDOW_MS;
+function isRecentlySettled(paidInFullAt: string | null): boolean {
+  if (!paidInFullAt) return false;
+  return Date.now() - new Date(paidInFullAt).getTime() < SETTLED_WINDOW_MS;
 }
 
 export function OrderWorkspace(props: OrderWorkspaceProps) {
@@ -176,7 +173,7 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
   const [declineReason, setDeclineReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [showPreview, setShowPreview] = useState(false);
-  const [quoteToDelete, setQuoteToDelete] = useState<Quote | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const post = async (url: string, body: unknown, label: string) => {
     setBusy(label);
@@ -228,25 +225,45 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
     [cakePricePence, discount, delivery, depositPercent],
   );
 
-  const deleteQuote = (quote: Quote) =>
-    post(
-      `/api/admin/orders/${props.orderId}/quote/delete`,
-      { quoteId: quote.id },
-      `delete-quote-${quote.id}`,
-    );
-
   /**
-   * Delete, asking first only where it is worth asking.
+   * Deletes the order and everything belonging to it.
    *
-   * A quote settled within the last fortnight opens the dialog. Everything
-   * else goes on the press.
+   * On success the workspace it was rendered from no longer exists, so this
+   * leaves for the list rather than refreshing a page describing something
+   * that has gone.
    */
-  const requestQuoteDeletion = (quote: Quote) => {
-    if (isRecentlySettled(quote)) {
-      setQuoteToDelete(quote);
+  const deleteOrder = async () => {
+    setBusy("delete-order");
+    setNotice(null);
+    try {
+      const response = await fetch(`/api/admin/orders/${props.orderId}/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const payload = (await response.json()) as { ok: boolean; message?: string };
+
+      if (!payload.ok) {
+        setNotice({ tone: "bad", text: payload.message ?? "That did not work." });
+        setBusy(null);
+        return;
+      }
+
+      router.push("/admin/orders");
+      router.refresh();
+    } catch {
+      setNotice({ tone: "bad", text: "Could not reach the server." });
+      setBusy(null);
+    }
+  };
+
+  /** Asks first only where the money is recent; otherwise deletes. */
+  const requestDelete = () => {
+    if (isRecentlySettled(props.paidInFullAt)) {
+      setConfirmingDelete(true);
       return;
     }
-    void deleteQuote(quote);
+    void deleteOrder();
   };
 
   const openImage = async (imageId: string) => {
@@ -262,12 +279,33 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
     <div className="mt-4">
       {/* ── Heading and status ───────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="display-sm text-espresso">{props.orderNumber}</h1>
-          <p className="mt-1 text-sm text-cocoa-soft">
-            Received {props.createdAt.slice(0, 10)}
-          </p>
+        <div className="flex flex-wrap items-center gap-4">
+          <div>
+            <h1 className="display-sm text-espresso">{props.orderNumber}</h1>
+            <p className="mt-1 text-sm text-cocoa-soft">
+              Received {props.createdAt.slice(0, 10)}
+            </p>
+          </div>
+
+          {/*
+            Deleting the whole order, beside the thing it deletes.
+
+            Everything goes: the request, the quotes, the messages, the payment
+            rows and the reference photographs. It is put here because this is
+            where the order is identified, so there is no doubt which one is
+            about to go — and kept visually quiet, because a destructive action
+            should be findable without being inviting.
+          */}
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={requestDelete}
+            className="btn btn-outline border-danger/40 px-4 py-2 text-xs text-danger disabled:opacity-40"
+          >
+            {busy === "delete-order" ? "Deleting…" : "Delete order"}
+          </button>
         </div>
+
         <StatusBadge status={props.status} />
       </div>
 
@@ -833,28 +871,6 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
                   </ul>
                 )}
 
-                {/*
-                  At the foot of the version it belongs to, and looking like a
-                  button rather than a word.
-
-                  It was first written as a small line of text between the
-                  version number and the date, which is where the eye goes
-                  last. A destructive action nobody can find is not a safe
-                  one — it is one that gets clicked by accident while looking
-                  for it.
-                */}
-                <div className="mt-4 flex justify-end border-t border-espresso/10 pt-3">
-                  <button
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={() => requestQuoteDeletion(quote)}
-                    className="btn btn-outline border-danger/40 px-4 py-2 text-xs text-danger disabled:opacity-40"
-                  >
-                    {busy === `delete-quote-${quote.id}`
-                      ? "Deleting…"
-                      : `Delete quote v${quote.version}`}
-                  </button>
-                </div>
               </li>
             ))}
           </ul>
@@ -1120,62 +1136,55 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
         )}
       </Section>
 
-      {/* ── Deleting a quote ─────────────────────────────────────────────── */}
+      {/* ── Deleting the order ───────────────────────────────────────────── */}
       {/*
-        Asked before it happens, and told the truth about what is being lost.
+        Asked only where the money is recent.
 
-        The wording changes with the facts. A quote settled within the last
-        fortnight is the dangerous one -- a customer can still query a charge,
-        and the quote is the record of what they agreed to pay -- so that case
-        is named explicitly. A quote paid longer ago, and one never paid at
-        all, get their own accurate sentence rather than a borrowed warning
-        about a payment that did not happen.
+        An order settled in full within the last fortnight is the one worth
+        stopping on; anything else deletes on the press. A dialog shown every
+        time is a dialog nobody reads by the third time, which is how the one
+        that mattered gets clicked through.
       */}
       <Modal
-        open={quoteToDelete !== null}
-        onClose={() => setQuoteToDelete(null)}
-        label="Delete this quote"
+        open={confirmingDelete}
+        onClose={() => setConfirmingDelete(false)}
+        label="Delete this order"
         panelClassName="max-w-lg"
       >
-        {quoteToDelete && (
-          <div className="p-7 sm:p-8">
-            <h2 className="font-serif text-xl text-espresso">
-              Delete quote v{quoteToDelete.version}?
-            </h2>
+        <div className="p-7 sm:p-8">
+          <h2 className="font-serif text-xl text-espresso">
+            Delete {props.orderNumber}?
+          </h2>
 
-            <p className="mt-4 text-sm text-cocoa">
-              There have not been two weeks since this quote has been fully
-              paid. Are you sure you want to permanently delete it?
-            </p>
+          <p className="mt-4 text-sm text-cocoa">
+            There have not been two weeks since this quote has been fully paid.
+            Are you sure you want to permanently delete it?
+          </p>
 
-            <p className="mt-4 border-l-2 border-caramel bg-vanilla px-4 py-3 text-xs text-espresso">
-              Any payment taken against it is kept, with its amount and Stripe
-              reference. Any link the customer holds to this quote will stop
-              working. This cannot be undone.
-            </p>
+          <p className="mt-4 border-l-2 border-danger/40 bg-danger/[0.04] px-4 py-3 text-xs text-espresso">
+            The request, every quote, all messages, the activity log, the
+            payment records and the reference photographs are removed. Stripe
+            keeps its own record of anything paid. This cannot be undone.
+          </p>
 
-            <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setQuoteToDelete(null)}
-                className="btn btn-outline py-2.5 text-xs"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={busy !== null}
-                onClick={async () => {
-                  const done = await deleteQuote(quoteToDelete);
-                  if (done) setQuoteToDelete(null);
-                }}
-                className="btn btn-solid border-danger bg-danger py-2.5 text-xs text-ivory disabled:opacity-50"
-              >
-                {busy === `delete-quote-${quoteToDelete.id}` ? "Deleting…" : "Delete"}
-              </button>
-            </div>
+          <div className="mt-6 flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(false)}
+              className="btn btn-outline py-2.5 text-xs"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => void deleteOrder()}
+              className="btn btn-solid border-danger bg-danger py-2.5 text-xs text-ivory disabled:opacity-50"
+            >
+              {busy === "delete-order" ? "Deleting…" : "Delete"}
+            </button>
           </div>
-        )}
+        </div>
       </Modal>
 
       {/* ── Ending the order ─────────────────────────────────────────────── */}

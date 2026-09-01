@@ -48,6 +48,11 @@ export async function findEligibleOrders(days = RETENTION_DAYS): Promise<string[
 /**
  * Deletes one order and everything belonging to it.
  *
+ * Exported because the admin's own delete button uses it too. There should be
+ * exactly one answer to "what does deleting an order remove", and a second
+ * copy written beside a button is how the retention sweep and the button come
+ * to disagree about whether reference photographs go with it.
+ *
  * Child rows are removed explicitly rather than relying on cascade. D1 does
  * enforce foreign keys -- PRAGMA foreign_keys reports 1 -- so most of these
  * would go anyway, but not all of them declare a cascade, and the ones that do
@@ -56,7 +61,7 @@ export async function findEligibleOrders(days = RETENTION_DAYS): Promise<string[
  * cannot quietly leave a customer's data behind while this still reports
  * success.
  */
-async function purgeOrder(orderId: string): Promise<{ images: number }> {
+export async function purgeOrder(orderId: string): Promise<{ images: number }> {
   // The keys first: after the rows are gone, nothing points at the objects.
   const { rows: images } = await query<{ r2_object_key: string }>(
     `SELECT r2_object_key FROM order_images WHERE order_id = ?`,
