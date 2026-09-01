@@ -48,9 +48,13 @@ export async function findEligibleOrders(days = RETENTION_DAYS): Promise<string[
 /**
  * Deletes one order and everything belonging to it.
  *
- * Child rows are removed explicitly rather than relying on cascade: D1 does
- * not enforce foreign keys by default, so a cascade that silently does nothing
- * would leave personal data behind while reporting success.
+ * Child rows are removed explicitly rather than relying on cascade. D1 does
+ * enforce foreign keys -- PRAGMA foreign_keys reports 1 -- so most of these
+ * would go anyway, but not all of them declare a cascade, and the ones that do
+ * declare it three migrations away from here. Deleting them by name means this
+ * function is the thing that decides what a purge removes, and a schema edit
+ * cannot quietly leave a customer's data behind while this still reports
+ * success.
  */
 async function purgeOrder(orderId: string): Promise<{ images: number }> {
   // The keys first: after the rows are gone, nothing points at the objects.

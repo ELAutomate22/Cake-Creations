@@ -7,6 +7,7 @@ import { CAKE_LINE_DESCRIPTION } from "@/lib/admin/pricing";
 import { calculateQuote, formatPence, formatPounds, parsePence } from "@/lib/admin/money";
 import { DEPOSIT_NOTICE } from "@/lib/email/templates";
 import { StatusBadge } from "./StatusBadge";
+import { Modal } from "@/components/ui/Modal";
 
 /**
  * Working on one order.
@@ -24,6 +25,9 @@ import { StatusBadge } from "./StatusBadge";
 type Money = { description: string; amountPence: number };
 
 type Quote = {
+  id: string;
+  /** When this quote was settled in full, or null if it was not. */
+  paidInFullAt: string | null;
   version: number;
   status: string;
   subtotalPence: number;
@@ -108,6 +112,35 @@ function Section({
 const control =
   "w-full border border-espresso/20 bg-ivory px-3 py-2.5 text-sm text-cocoa outline-none focus:border-espresso";
 
+/**
+ * What to ask before deleting a quote.
+ *
+ * Outside the component on purpose. It reads the clock, and anything inside a
+ * component that reads the clock is render code as far as the linter is
+ * concerned — rightly, since a render that reads the clock gives a different
+ * answer every time it runs. This is only ever called from a click, which is
+ * also the moment the answer needs to be current.
+ *
+ * The wording follows the facts. A quote settled within the last fortnight is
+ * the dangerous one — a customer can still query the charge, and this is the
+ * record of what they agreed to pay — so that case is named explicitly. The
+ * others get an accurate sentence rather than a borrowed warning about a
+ * payment that never happened.
+ */
+function deletionQuestion(quote: Quote): string {
+  const paidAt = quote.paidInFullAt;
+  if (!paidAt) {
+    return "This quote has not been paid in full. Are you sure you want to permanently delete it?";
+  }
+
+  const fortnight = 14 * 24 * 60 * 60 * 1000;
+  if (Date.now() - new Date(paidAt).getTime() < fortnight) {
+    return "There have not been two weeks since this quote has been fully paid. Are you sure you want to permanently delete it?";
+  }
+
+  return `This quote was paid in full on ${paidAt.slice(0, 10)}. Are you sure you want to permanently delete it?`;
+}
+
 export function OrderWorkspace(props: OrderWorkspaceProps) {
   const router = useRouter();
 
@@ -151,6 +184,9 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
   const [declineReason, setDeclineReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+  const [quoteToDelete, setQuoteToDelete] = useState<
+    { quote: Quote; question: string } | null
+  >(null);
 
   const post = async (url: string, body: unknown, label: string) => {
     setBusy(label);
@@ -765,6 +801,16 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
                   <span className="text-espresso">
                     Quote v{quote.version} — {formatPounds(quote.totalPence)}
                   </span>
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() =>
+                      setQuoteToDelete({ quote, question: deletionQuestion(quote) })
+                    }
+                    className="text-[0.625rem] uppercase tracking-[0.14em] text-danger hover:opacity-70 disabled:opacity-40"
+                  >
+                    Delete
+                  </button>
                   <span className="text-xs text-cocoa-soft">
                     {quote.sentAt
                       ? `Sent ${quote.sentAt.slice(0, 16).replace("T", " ")}`
@@ -1049,6 +1095,66 @@ export function OrderWorkspace(props: OrderWorkspaceProps) {
           </div>
         )}
       </Section>
+
+      {/* ── Deleting a quote ─────────────────────────────────────────────── */}
+      {/*
+        Asked before it happens, and told the truth about what is being lost.
+
+        The wording changes with the facts. A quote settled within the last
+        fortnight is the dangerous one -- a customer can still query a charge,
+        and the quote is the record of what they agreed to pay -- so that case
+        is named explicitly. A quote paid longer ago, and one never paid at
+        all, get their own accurate sentence rather than a borrowed warning
+        about a payment that did not happen.
+      */}
+      <Modal
+        open={quoteToDelete !== null}
+        onClose={() => setQuoteToDelete(null)}
+        label="Delete this quote"
+        panelClassName="max-w-lg"
+      >
+        {quoteToDelete && (
+          <div className="p-7 sm:p-8">
+            <h2 className="font-serif text-xl text-espresso">
+              Delete quote v{quoteToDelete.quote.version}?
+            </h2>
+
+            <p className="mt-4 text-sm text-cocoa">{quoteToDelete.question}</p>
+
+            <p className="mt-4 border-l-2 border-caramel bg-vanilla px-4 py-3 text-xs text-espresso">
+              Any payment taken against it is kept, with its amount and Stripe
+              reference. Any link the customer holds to this quote will stop
+              working. This cannot be undone.
+            </p>
+
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setQuoteToDelete(null)}
+                className="btn btn-outline py-2.5 text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={async () => {
+                  const target = quoteToDelete.quote;
+                  const done = await post(
+                    `/api/admin/orders/${props.orderId}/quote/delete`,
+                    { quoteId: target.id },
+                    `delete-quote-${target.id}`,
+                  );
+                  if (done) setQuoteToDelete(null);
+                }}
+                className="btn btn-solid border-danger bg-danger py-2.5 text-xs text-ivory disabled:opacity-50"
+              >
+                {busy === `delete-quote-${quoteToDelete.quote.id}` ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* ── Ending the order ─────────────────────────────────────────────── */}
       {props.status !== "declined" && props.status !== "cancelled" && (

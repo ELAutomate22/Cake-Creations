@@ -125,6 +125,28 @@ export default async function AdminOrderPage({
           amountPence: item.amount_pence,
         }))}
         quotes={quotes.map((quote) => ({
+          id: quote.id,
+          /*
+            When this particular quote was settled in full.
+            
+            Worked out here rather than on the screen because it decides what
+            the delete confirmation is allowed to claim. A confirmation that
+            says a quote was paid recently, on a quote that was never paid,
+            is a lie told at the exact moment someone is deciding whether to
+            destroy a record.
+          */
+          paidInFullAt: (() => {
+            const settled = payments.filter(
+              (payment) => payment.quote_id === quote.id && payment.status === "paid",
+            );
+            const total = settled.reduce((sum, p) => sum + p.amount_pence, 0);
+            if (settled.length === 0 || total < quote.total_pence) return null;
+            return settled
+              .map((p) => p.paid_at)
+              .filter((at): at is string => Boolean(at))
+              .sort()
+              .pop() ?? null;
+          })(),
           version: quote.version,
           status: quote.status,
           subtotalPence: quote.subtotal_pence,
