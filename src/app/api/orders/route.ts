@@ -10,6 +10,9 @@ import { nextOrderNumber } from "@/lib/orders/reference";
 import { clientIp, fingerprint, sanitiseText } from "@/lib/reviews/sanitise";
 import { isDatabaseConfigured, query } from "@/lib/d1/client";
 import { deleteObject, isStorageConfigured, putObject } from "@/lib/r2/client";
+import { sendOwnerAlert } from "@/lib/email/resend";
+import { ownerNightAlertEmail } from "@/lib/email/templates";
+import { appBaseUrl } from "@/lib/stripe/client";
 
 /**
  * Cake requests.
@@ -78,6 +81,32 @@ function looksLikeImage(bytes: Uint8Array, mimeType: string): boolean {
 function extensionOf(filename: string): string {
   const dot = filename.lastIndexOf(".");
   return dot === -1 ? "" : filename.slice(dot).toLowerCase();
+}
+
+
+/**
+ * Whether a moment falls in the hours nobody is watching the admin.
+ *
+ * Nine at night until eight in the morning, in London — not in whatever zone
+ * the server happens to run in, which is UTC on Netlify and would be an hour
+ * out for half the year. `Intl` is given the zone explicitly so British Summer
+ * Time is handled by the platform rather than by arithmetic here.
+ *
+ * `h23` matters: the twelve-hour cycles render midnight as "24" or "12"
+ * depending on the locale, and a window that silently excluded midnight would
+ * be a difficult thing to notice.
+ */
+function isOutOfHours(at: Date): boolean {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(at),
+  );
+
+  if (!Number.isFinite(hour)) return false;
+  return hour >= 21 || hour < 8;
 }
 
 export async function POST(request: Request) {
@@ -350,6 +379,59 @@ export async function POST(request: Request) {
         now,
       ],
     );
+
+    /*
+     * Tell the owner, but only about the ones she would otherwise miss.
+     *
+     * A request that arrives at two in the morning sits unseen until someone
+     * opens the admin; one that arrives at eleven on a Tuesday does not need
+     * an email to be noticed. So the alert is sent only between nine at night
+     * and eight in the morning.
+     *
+     * Failure here is swallowed on purpose. The customer's request is saved by
+     * this point, and refusing them a confirmation because a notification to
+     * someone else did not send would be the wrong way round. It is logged
+     * instead, and the request stands.
+     */
+    if (isOutOfHours(new Date(now))) {
+      try {
+        const alert = ownerNightAlertEmail({
+          orderNumber,
+          occasion:
+            order.occasion === "Other" ? order.occasionOther : order.occasion,
+          requiredDate: order.requiredDate,
+          servings: String(order.servings),
+          receivedAt: new Date(now).toLocaleString("en-GB", {
+            timeZone: "Europe/London",
+          }),
+          adminUrl: `${appBaseUrl()}/admin/orders/${id}`,
+        });
+
+        const sent = await sendOwnerAlert(alert);
+
+        await query(
+          `INSERT INTO order_activity (
+             id, order_id, activity_type, description, metadata_json, created_at
+           ) VALUES (?,?,?,?,?,?)`,
+          [
+            crypto.randomUUID(),
+            id,
+            "owner_notified",
+            sent.ok
+              ? "Out-of-hours alert sent to the owner."
+              : "Out-of-hours alert could not be sent.",
+            JSON.stringify({ ok: sent.ok, error: sent.error ?? null }),
+            new Date().toISOString(),
+          ],
+        );
+
+        if (!sent.ok) {
+          console.error("Out-of-hours owner alert failed:", sent.error);
+        }
+      } catch (error) {
+        console.error("Out-of-hours owner alert failed:", error);
+      }
+    }
 
     // Deliberately only the reference. Nothing the customer submitted is
     // echoed back, so this response cannot become a way to read an order.

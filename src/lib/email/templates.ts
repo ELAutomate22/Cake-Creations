@@ -134,6 +134,77 @@ function moneyRow(label: string, value: string, strong = false): string {
 
 /* ── Email 1 — quote and deposit request ─────────────────────────────────── */
 
+/**
+ * The night-time alert to the owner.
+ *
+ * Sent only for requests that arrive between 9pm and 8am, when nobody is
+ * watching the admin. Its job is to say "something came in, look in the
+ * morning" — not to be the order.
+ *
+ * It carries no customer contact details on purpose. Enough to know whether a
+ * request needs attention early, and a link to where the rest of it lives. A
+ * name, an email address and a phone number sitting in an inbox is a copy of
+ * someone's data outside the system holding it, and this alert would not be
+ * more useful for having them.
+ */
+export function ownerNightAlertEmail(data: {
+  orderNumber: string;
+  occasion: string;
+  requiredDate: string;
+  servings: string;
+  receivedAt: string;
+  adminUrl: string;
+}) {
+  const rows = summaryTable([
+    { label: "Reference", value: data.orderNumber },
+    { label: "Occasion", value: data.occasion },
+    { label: "Date required", value: data.requiredDate },
+    { label: "Servings", value: data.servings },
+    { label: "Received", value: data.receivedAt },
+  ]);
+
+  const inner = `
+    <p style="margin:0 0 16px;color:#4a352b;">A cake request came in overnight.</p>
+    ${rows}
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 24px;">
+      <tr><td style="background:#2a1d17;">
+        <a href="${escape(data.adminUrl)}" class="button-link"
+           style="display:inline-block;padding:14px 32px;background:#2a1d17;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;border:1px solid #2a1d17;">
+          Open the request
+        </a>
+      </td></tr>
+    </table>
+    <p style="margin:0 0 16px;font-size:13px;color:#2a1d17;">
+      Or copy this address into your browser:<br />
+      <a href="${escape(data.adminUrl)}" class="plain-link"
+         style="color:#2a1d17;text-decoration:underline;word-break:break-all;">${escape(data.adminUrl)}</a>
+    </p>
+    <p style="margin:0;font-size:13px;color:#6b5347;">
+      The customer's name and contact details are in the admin. Nothing has been
+      sent to them yet.
+    </p>`;
+
+  const text = [
+    "A cake request came in overnight.",
+    "",
+    `Reference: ${data.orderNumber}`,
+    `Occasion: ${data.occasion}`,
+    `Date required: ${data.requiredDate}`,
+    `Servings: ${data.servings}`,
+    `Received: ${data.receivedAt}`,
+    "",
+    `Open it: ${data.adminUrl}`,
+    "",
+    "The customer's details are in the admin. Nothing has been sent to them yet.",
+  ].join("\n");
+
+  return {
+    subject: `New cake request overnight — ${data.orderNumber}`,
+    html: SHELL(`New cake request — ${data.orderNumber}`, inner),
+    text,
+  };
+}
+
 export function quoteEmail(data: QuoteEmailData) {
   const items = data.items
     .map(

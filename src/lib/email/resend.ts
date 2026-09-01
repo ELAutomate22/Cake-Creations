@@ -44,6 +44,74 @@ export function isEmailConfigured(): boolean {
   return Boolean(API_KEY && FROM_EMAIL);
 }
 
+/**
+ * Where an out-of-hours alert goes.
+ *
+ * A personal address, so it lives in the environment rather than in the
+ * source. This repository is public, and an address written into a file here
+ * is an address in a public search index and, before long, on a mailing list.
+ * Keeping it in Netlify also means it can be changed without a code change.
+ */
+const OWNER_ALERT_EMAIL = process.env.OWNER_ALERT_EMAIL;
+
+export function isOwnerAlertConfigured(): boolean {
+  return Boolean(API_KEY && FROM_EMAIL && OWNER_ALERT_EMAIL);
+}
+
+/**
+ * Tells the owner about a request that arrived while nobody was watching.
+ *
+ * Deliberately a separate function from `sendOrderEmail`, which takes an order
+ * and reads the recipient out of the database precisely so that no caller can
+ * choose an address. That rule is what stops the order endpoints becoming a
+ * way to send mail to anyone, and it should not be loosened to accommodate
+ * this. This one sends to a single address fixed in the environment, and to no
+ * other, so it cannot be steered either.
+ *
+ * Nothing here is recorded in `order_messages`. That table is the
+ * correspondence with the customer, shown to the owner as such, and an alert
+ * to herself sitting in that history would misrepresent what was sent to whom.
+ */
+export async function sendOwnerAlert({
+  subject,
+  html,
+  text,
+}: {
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  if (!isOwnerAlertConfigured()) {
+    return { ok: false, error: "Owner alerts are not configured." };
+  }
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        to: [OWNER_ALERT_EMAIL],
+        subject,
+        html,
+        text,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = (await response.json()) as { message?: string };
+      return { ok: false, error: body.message ?? `HTTP ${response.status}` };
+    }
+
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "unknown" };
+  }
+}
+
 export type MessageType =
   | "quote"
   | "deposit_confirmation"
