@@ -70,8 +70,28 @@ function paragraphs(value: string): string {
 const SHELL = (title: string, inner: string) => `<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>${escape(title)}</title></head>
-<body style="margin:0;padding:0;background:#f4ece1;">
+<meta name="color-scheme" content="light" />
+<meta name="supported-color-schemes" content="light" />
+<title>${escape(title)}</title>
+<style>
+  :root { color-scheme: light; supported-color-schemes: light; }
+  /*
+    Dark mode is the reason this exists.
+
+    The design is ivory with dark text. A client that decides to invert it
+    turns the backgrounds dark while any element carrying an explicit light
+    colour stays light, which is how a legible email becomes brown text on a
+    brown field with an invisible button. Declaring the scheme stops the
+    clients that honour it; the explicit colours on every element below cover
+    the ones that do not.
+
+    The link keeps its underline on purpose. If the colour is overridden by a
+    client, the underline is what still says "this is a link".
+  */
+  a.button-link { background:#2a1d17 !important; color:#fbf7f1 !important; }
+  a.plain-link { color:#2a1d17 !important; text-decoration:underline !important; }
+</style></head>
+<body style="margin:0;padding:0;background:#f4ece1;color:#4a352b;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4ece1;padding:24px 12px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
@@ -134,19 +154,21 @@ export function quoteEmail(data: QuoteEmailData) {
   const payment = data.quoteUrl && data.paymentEnabled !== false
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
          <tr><td style="background:#2a1d17;">
-           <a href="${escape(data.quoteUrl as string)}"
-              style="display:inline-block;padding:14px 32px;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;">
+           <a href="${escape(data.quoteUrl as string)}" class="button-link"
+              style="display:inline-block;padding:14px 32px;background:#2a1d17;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;border:1px solid #2a1d17;">
              Review quote &amp; pay deposit
            </a>
          </td></tr>
        </table>
-       <p style="margin:0 0 20px;font-size:13px;color:#6b5347;">
-         Or open: <a href="${escape(data.quoteUrl as string)}" style="color:#6b5347;">${escape(data.quoteUrl as string)}</a>
+       <p style="margin:0 0 20px;font-size:13px;color:#2a1d17;">
+         Or copy this address into your browser:<br />
+         <a href="${escape(data.quoteUrl as string)}" class="plain-link"
+            style="color:#2a1d17;text-decoration:underline;word-break:break-all;">${escape(data.quoteUrl as string)}</a>
        </p>`
     : data.quoteUrl
       ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
            <tr><td style="background:#2a1d17;">
-             <a href="${escape(data.quoteUrl)}" style="display:inline-block;padding:14px 32px;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;">Review your quote</a>
+             <a href="${escape(data.quoteUrl)}" class="button-link" style="display:inline-block;padding:14px 32px;background:#2a1d17;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;border:1px solid #2a1d17;">Review your quote</a>
            </td></tr>
          </table>
          <p style="margin:0 0 24px;padding:14px 16px;background:#f4ece1;border-left:3px solid #c9a882;">
@@ -295,11 +317,13 @@ export function finalPaymentEmail(data: {
   const payment = data.payBalanceUrl
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;">
          <tr><td style="background:#2a1d17;">
-           <a href="${escape(data.payBalanceUrl)}" style="display:inline-block;padding:14px 32px;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;">Pay remaining balance</a>
+           <a href="${escape(data.payBalanceUrl)}" class="button-link" style="display:inline-block;padding:14px 32px;background:#2a1d17;color:#fbf7f1;text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;border:1px solid #2a1d17;">Pay remaining balance</a>
          </td></tr>
        </table>
        <p style="margin:0 0 20px;font-size:13px;color:#6b5347;">
-         Or open: <a href="${escape(data.payBalanceUrl)}" style="color:#6b5347;">${escape(data.payBalanceUrl)}</a>
+         Or copy this address into your browser:<br />
+         <a href="${escape(data.payBalanceUrl)}" class="plain-link"
+            style="color:#2a1d17;text-decoration:underline;word-break:break-all;">${escape(data.payBalanceUrl)}</a>
        </p>`
     : `<p style="margin:0 0 24px;padding:14px 16px;background:#f4ece1;border-left:3px solid #c9a882;">We will be in touch with payment details for the balance.</p>`;
 
