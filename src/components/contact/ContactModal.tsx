@@ -275,10 +275,6 @@ export function ContactModal({
           </div>
         )}
 
-        <p className="mt-9 border-t border-espresso/10 pt-6 text-sm text-cocoa-soft">
-          Cakes are discussed and arranged directly with{" "}
-          {business.name}. This website does not take orders online.
-        </p>
       </div>
     </Modal>
   );

@@ -86,11 +86,13 @@ export const metadata: Metadata = {
     description: business.shortDescription,
     url: business.url,
     locale: "en_GB",
+    images: [{ url: "/brand/og.png", width: 1200, height: 630, alt: business.name }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${business.name} — Personalised and Classic Cakes`,
     description: business.shortDescription,
+    images: ["/brand/og.png"],
   },
   robots: {
     index: true,

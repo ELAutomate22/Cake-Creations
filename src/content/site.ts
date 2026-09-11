@@ -152,7 +152,7 @@ export const contact = {
     { number: "+44 7773 556005", label: "[NAME FOR THIS NUMBER]" },
   ] as PhoneNumber[],
 
-  email: "[EMAIL ADDRESS]",
+  email: "kuhlengisak@gmail.com",
   whatsapp: "[WHATSAPP NUMBER]",
   location: "[BUSINESS LOCATION]",
   collection: "[COLLECTION INFORMATION]",
@@ -246,7 +246,7 @@ export const media = {
 
 export const introduction = {
   eyebrow: "About the cakes",
-  heading: "Cakes made for the people they are made for",
+  heading: "The cake everyone will remember",
   body: "Every occasion deserves a cake created with care. Elshadai Cake Creations combines thoughtful design, careful detail and a personal approach to create classic and personalised cakes for meaningful celebrations.",
   /** An optional second paragraph. Leave "" to hide it. */
   bodySecondary: "[BUSINESS DESCRIPTION]",
